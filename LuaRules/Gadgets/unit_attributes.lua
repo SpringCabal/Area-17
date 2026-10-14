@@ -284,7 +284,7 @@ function UpdateUnitAttributes(unitID, frame)
 	local selfTurnSpeedChange = spGetUnitRulesParam(unitID, "selfTurnSpeedChange")
 	local selfMaxAccelerationChange = spGetUnitRulesParam(unitID, "selfMaxAccelerationChange")
 	
-	if selfMoveSpeedChange or selfTurnSpeedChange or selfAccelerationChange then
+	if selfMoveSpeedChange or selfTurnSpeedChange or selfMaxAccelerationChange then
 		local slowMult   = 1-(slowState or 0)
 		local moveMult   = (slowMult)*(selfMoveSpeedChange or 1)
 		local turnMult   = (slowMult)*(selfTurnSpeedChange or 1)
@@ -292,10 +292,8 @@ function UpdateUnitAttributes(unitID, frame)
 		local maxAccMult = (slowMult)*(selfMoveSpeedChange or 1)*(selfMaxAccelerationChange or 1)
 		
 		unitSlowed[unitID] = moveMult < 1
-		if reloadMult ~= currentReload[unitID] then
-			updateReloadSpeed(unitID, ud, reloadMult, frame)
-			currentReload[unitID] = reloadMult
-		end
+		-- These attributes change movement only. Resetting weapon reloads here
+		-- overwrites point-defense upgrades when haste starts or ends.
 		
 		if currentMovement[unitID] ~= moveMult or currentTurn[unitID] ~= turnMult or currentAcc[unitID] ~= maxAccMult then
 			updateMovementSpeed(unitID, ud, moveMult, turnMult,maxAccMult)

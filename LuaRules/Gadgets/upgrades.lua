@@ -135,6 +135,7 @@ function HandleLuaMessage(msg)
 		local name = msg_table[2]
 		if not GG.Tech.UnlockTech(name) then
 			Spring.Log("tech", LOG.ERROR, "Something went wrong unlocking tech: " .. name)
+			return
 		end
 		if name == "carrierDrones" then
 			GG.UpdateDroneParameters(1, 5)
@@ -146,6 +147,7 @@ function HandleLuaMessage(msg)
 		
 		if not GG.Tech.UpgradeTech(name) then
 			Spring.Log("tech", LOG.ERROR, "Something went wrong upgrading tech: " .. name)
+			return
 		end
 		
 		UpdateTech(name)

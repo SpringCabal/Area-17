@@ -222,11 +222,12 @@ function gadget:UnitPreDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, w
 		
 		local nMag = math.sqrt(nx^2 + ny^2 + nz^2)
 		local nx, ny, nz = nx/nMag, ny/nMag, nz/nMag -- normal to unit vector
-		nx, ny, nz = vx*nx, vy*ny, vz*nz -- normal is now a component of velocity
+		local normalSpeed = vx*nx + vy*ny + vz*nz
+		nx, ny, nz = normalSpeed*nx, normalSpeed*ny, normalSpeed*nz -- project velocity onto the normal
 		local tx, ty, tz = vx-nx, vy-ny, vz-nz -- tangent is the other component of velocity
 		local nf = att.elasticity
 		local tf = att.friction
-		vx, vy, vz = tx*tf + nx*nf, ty*tf + ny*nf, tz*tf + nz*nf
+		vx, vy, vz = tx*tf - nx*nf, ty*tf - ny*nf, tz*tf - nz*nf
 		Spring.SetUnitVelocity(unitID,0,0,0)
 		Spring.AddUnitImpulse(unitID,vx,vy,vz) --must do impulse because SetUnitVelocity() is not fully functional in Spring 91 (only work with vertical velocity OR when assigned 0)
 		

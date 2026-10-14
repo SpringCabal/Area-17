@@ -37,18 +37,13 @@ local function SetPDReload(mult)
 	if not ufoID then
 		return
 	end
-	Spring.SetUnitWeaponState(ufoID, 13, {
-		reloadTime = 20*(1 - mult),
-	})
-	Spring.SetUnitWeaponState(ufoID, 14, {
-		reloadTime = 20*(1 - mult),
-	})
-	Spring.SetUnitWeaponState(ufoID, 15, {
-		reloadTime = 20*(1 - mult),
-	})
-	Spring.SetUnitWeaponState(ufoID, 16, {
-		reloadTime = 20*(1 - mult),
-	})
+	for slot = 13, 16 do
+		local weaponDefID = UnitDefs[ufoDefID].weapons[slot].weaponDef
+		local baseReload = WeaponDefs[weaponDefID].reload
+		Spring.SetUnitWeaponState(ufoID, slot, {
+			reloadTime = baseReload / mult,
+		})
+	end
 end
 
 function gadget:UnitCreated(unitID, unitDefID, unitTeam)
