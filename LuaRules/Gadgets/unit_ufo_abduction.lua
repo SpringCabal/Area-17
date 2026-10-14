@@ -63,7 +63,8 @@ end
 -------------------------------------------------------------------
 
 local function callScript(unitID, funcName, args)
-	local func = Spring.UnitScript.GetScriptEnv(unitID)[funcName]
+	local env = unitID and Spring.UnitScript.GetScriptEnv(unitID)
+	local func = env and env[funcName]
 	if func then
 		Spring.UnitScript.CallAsUnit(unitID,func, args)
 	end

@@ -135,20 +135,22 @@ local function Float()
 end
 
 function Abduction_float()
-	local ux, uy, uz = Spring.GetUnitPosition(unitID)
-	Spring.PlaySoundFile("sounds/scream.wav", 0.8, ux, uy, uz, 'sfx')
-	if (not floating) then
+	if not floating then
+		floating = true
+		local ux, uy, uz = Spring.GetUnitPosition(unitID)
+		Spring.PlaySoundFile("sounds/scream.wav", 0.8, ux, uy, uz, 'sfx')
 		StartThread(Float)
 	end
-	floating = true;
 end
 
 function script.StartMoving()
+	floating = false
 	Signal(SIG_WALK);
 	StartThread(Walk);
 end
 
 function script.StopMoving()
+	floating = false
 	Signal(SIG_WALK);
 	StartThread(Stop);
 end

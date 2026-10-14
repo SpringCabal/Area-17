@@ -43,7 +43,7 @@ function script.AimWeapon(num, heading, pitch)
 	Turn(turret, z_axis, heading, math.rad(100))
  	Turn(tubeLeft, x_axis, -pitch, math.rad(50))
 	Turn(tubeRight, x_axis, -pitch, math.rad(50))
-	WaitForTurn(turret, y_axis)
+	WaitForTurn(turret, z_axis)
  	WaitForTurn(tubeLeft, x_axis)
 	WaitForTurn(tubeRight, x_axis)
 	return true
