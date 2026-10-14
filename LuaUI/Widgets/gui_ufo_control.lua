@@ -13,7 +13,7 @@ end
 -------------------------------------------------------------------
 -------------------------------------------------------------------
 
-include('keysym.h.lua')
+require('keysym.lua')
 local UP = KEYSYMS.UP
 local DOWN = KEYSYMS.DOWN
 local LEFT = KEYSYMS.LEFT

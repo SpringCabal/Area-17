@@ -4,6 +4,7 @@ local Helipad = Unit:New {
     },
     footprintX			    = 8,
 	footprintZ			    = 8,
+	buildCostMetal          = 100,
 	mass				    = 10e5,
     maxDamage               = 10000,
     collisionVolumeScales   = '0 0 0',

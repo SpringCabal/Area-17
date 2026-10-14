@@ -19,7 +19,7 @@ local canLand
 
 local LANDING_RADIUS = 200
 
-include('keysym.h.lua')
+require('keysym.lua')
 local SPACE = KEYSYMS.SPACE
 
 local vsx, vsy

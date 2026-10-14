@@ -1,6 +1,7 @@
 local Static_AA = Unit:New {
-    footprintX			    = 8,
-	footprintZ			    = 8,
+    footprintX			    = 6,
+	footprintZ			    = 6,
+	buildCostMetal          = 100,
 	mass				    = 10e5,
     maxDamage               = 1500,
     pushResistant           = true,
@@ -13,7 +14,7 @@ local Static_AA = Unit:New {
 	turnRate			    = 0,
 	upright				    = true,
     sightDistance		    = 0,
-    yardMap                 = "oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo oooooooo",
+    yardMap                 = "oooooo oooooo oooooo oooooo oooooo oooooo",
 
 	category               = "land armed",
 
@@ -28,8 +29,6 @@ local Static_AA = Unit:New {
 		terrainblock_z     = 64,
     },
 
-    footprintX			    = 6,
-	footprintZ			    = 6,
 	-- Hitbox
 	collisionVolumeOffsets = "0 0 0",
 	collisionVolumeScales  = "70 76 70",
@@ -90,6 +89,7 @@ local Strong_AA = Static_AA:New {
 	
 	footprintX			    = 12,
 	footprintZ			    = 12,
+	yardMap                 = "oooooooooooo oooooooooooo oooooooooooo oooooooooooo oooooooooooo oooooooooooo oooooooooooo oooooooooooo oooooooooooo oooooooooooo oooooooooooo oooooooooooo",
 	collisionVolumeOffsets  = '0 50 0',
 	collisionVolumeScales   = '100 84 100',
 	collisionVolumeType     = 'cylY',

@@ -103,7 +103,7 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-VFS.Include("luarules/utilities/unitrendering.lua", nil, VFS.BASE)
+VFS.Include("LuaRules/Utilities/UnitRendering.lua", nil, VFS.MOD)
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -278,10 +278,10 @@ function ToggleShadows()
   for _,unitID in pairs(units) do
     local unitDefID = Spring.GetUnitDefID(unitID)
     local teamID    = Spring.GetUnitTeam(unitID)
-    UnitDestroyed(nil,unitID)
+    gadget:UnitDestroyed(unitID,unitDefID)
     Spring.UnitRendering.DeactivateMaterial(unitID,3)
     if not select(3,Spring.GetUnitIsStunned(unitID)) then --// inbuild?
-      UnitFinished(nil,unitID,unitDefID,teamID)
+      gadget:UnitFinished(unitID,unitDefID,teamID)
     end
   end
 end

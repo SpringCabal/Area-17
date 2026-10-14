@@ -34,7 +34,6 @@ end
 function widget:DrawScreen()
 	if font == nil then
 		font = gl.LoadFont("FreeSansBold.otf")
-		Spring.Echo(font)
 	end
     local startPos = vsy - 200
     gl.PushMatrix()

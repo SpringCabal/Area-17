@@ -16,7 +16,7 @@ void main(void) {
 		S += texture2D(texture0, C0 - vec2(r * inverseRX, 0.0)) * weight;
 		S += texture2D(texture0, C0 + vec2(r * inverseRX, 0.0)) * weight;
 
-		total_weight += 2*weight;
+		total_weight += 2.0 * weight;
 	}
 
 	gl_FragColor = vec4(S.rgb/total_weight, 1.0);

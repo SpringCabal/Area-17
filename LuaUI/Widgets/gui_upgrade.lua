@@ -13,7 +13,7 @@ end
 local ufoID
 local ufoDefID = UnitDefNames["ufo"].id
 
-include('keysym.h.lua')
+require('keysym.lua')
 local UPGRADE_KEY = KEYSYMS.T
 
 local vsx, vsy

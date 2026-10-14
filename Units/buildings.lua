@@ -1,5 +1,6 @@
 local Building = Unit:New {
 	mass				    = 10e5,
+    buildCostMetal          = 100,
     maxDamage               = 2000,
 	
     pushResistant           = true,

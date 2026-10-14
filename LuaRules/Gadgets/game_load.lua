@@ -1,32 +1,32 @@
 -- Copied/adapted from Scened
 
 if not gadgetHandler:IsSyncedCode() then
-	return
+    return
 end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 function gadget:GetInfo()
-	return {
-		name 	= "Game load",
-		desc	= "Spawns units for the game.",
-		author	= "gajop",
-		date	= "August 2015",
-		license	= "GNU GPL, v2 or later",
-		layer	= 100,
-		enabled = true
-	}
+    return {
+        name = "Game load",
+        desc = "Spawns units for the game.",
+        author = "gajop",
+        date = "August 2015",
+        license = "GNU GPL, v2 or later",
+        layer = 100,
+        enabled = true
+    }
 end
 
 local file = "LuaRules/Configs/spawn.lua"
 
 function gadget:Initialize()
-	if Game.gameName == "Scenario Editor Alien resources" then
-		gadgetHandler:RemoveGadget()
-		return
-	end
-	local data = loadstring(VFS.LoadFile(file))()
-	self:load(data.units)
+    if Game.gameName == "Scenario Editor Alien resources" then
+        gadgetHandler:RemoveGadget()
+        return
+    end
+    local data = loadstring(VFS.LoadFile(file))()
+    self:load(data.units)
 end
 
 function gadget:setUnitProperties(unitId, unit)
@@ -48,7 +48,7 @@ function gadget:setUnitProperties(unitId, unit)
     if unit.experience ~= nil then
         Spring.SetUnitExperience(unitId, unit.experience)
     end
-    if unit.fuel ~= nil then
+    if unit.fuel ~= nil and Spring.SetUnitFuel then
         Spring.SetUnitFuel(unitId, unit.fuel)
     end
     if unit.neutral ~= nil then
@@ -79,22 +79,13 @@ function gadget:setUnitProperties(unitId, unit)
     if unit.states ~= nil then
         local s = unit.states
         if s.cloak ~= nil then
-            Spring.GiveOrderToUnit(unitId, CMD.INSERT,
-                { 0, CMD.CLOAK, 0, boolToNumber(s.cloak)},
-                {"alt"}
-            );
+            Spring.GiveOrderToUnit(unitId, CMD.INSERT, {0, CMD.CLOAK, 0, boolToNumber(s.cloak)}, {"alt"})
         end
         if s.firestate ~= nil then
-            Spring.GiveOrderToUnit(unitId, CMD.INSERT,
-                { 0, CMD.FIRE_STATE, 0, s.firestate},
-                {"alt"}
-            );
+            Spring.GiveOrderToUnit(unitId, CMD.INSERT, {0, CMD.FIRE_STATE, 0, s.firestate}, {"alt"})
         end
         if s.movestate ~= nil then
-            Spring.GiveOrderToUnit(unitId, CMD.INSERT,
-                { 0, CMD.MOVE_STATE, 0, s.movestate},
-                {"alt"}
-            );
+            Spring.GiveOrderToUnit(unitId, CMD.INSERT, {0, CMD.MOVE_STATE, 0, s.movestate}, {"alt"})
         end
         -- setting the active state doesn't work currently
         --[[
@@ -106,10 +97,7 @@ function gadget:setUnitProperties(unitId, unit)
         end
         --]]
         if s["repeat"] ~= nil then
-            Spring.GiveOrderToUnit(unitId, CMD.INSERT,
-                { 0, CMD.REPEAT, 0, boolToNumber(s["repeat"])},
-                {"alt"}
-            );
+            Spring.GiveOrderToUnit(unitId, CMD.INSERT, {0, CMD.REPEAT, 0, boolToNumber(s["repeat"])}, {"alt"})
         end
     end
 end
@@ -118,7 +106,18 @@ function isUnitCommand(command)
     if command.params ~= nil and #command.params ~= 1 then
         return false
     end
-    local unitCommands = { "DEATHWAIT", "ATTACK", "GUARD", "REPAIR", "LOAD_UNITS", "UNLOAD_UNITS", "RECLAIM", "RESSURECT", "CAPTURE", "LOOPBACKATTACK" }
+    local unitCommands = {
+        "DEATHWAIT",
+        "ATTACK",
+        "GUARD",
+        "REPAIR",
+        "LOAD_UNITS",
+        "UNLOAD_UNITS",
+        "RECLAIM",
+        "RESSURECT",
+        "CAPTURE",
+        "LOOPBACKATTACK"
+    }
     for _, unitCommand in pairs(unitCommands) do
         if command.name == unitCommand then
             return true
@@ -132,7 +131,7 @@ function gadget:setUnitCommands(unitId, commands)
         local params
         -- unit commands need to get the real unit ID
         if isUnitCommand(command) then
-            params = { self:getSpringUnitId(command.params[1]) }
+            params = {self:getSpringUnitId(command.params[1])}
         else
             params = command.params
         end
@@ -153,7 +152,11 @@ function gadget:loadUnit(unit)
     end
     -- FIXME: this check is not usable until unit creation by ID is fixed
     if false and unit.id ~= nil and unit.id ~= unitId then
-        Spring.Log("scened", LOG.ERROR, "Created unit has different id: " .. tostring(unit.id) .. ", " .. tostring(unitId))
+        Spring.Log(
+            "scened",
+            LOG.ERROR,
+            "Created unit has different id: " .. tostring(unit.id) .. ", " .. tostring(unitId)
+        )
     end
     self:setUnitProperties(unitId, unit)
     if unit.commands ~= nil then
@@ -165,7 +168,7 @@ end
 function gadget:load(units)
     self.unitIdCounter = 0
     -- load the units without the commands
-    local unitCommands = {} 
+    local unitCommands = {}
     for _, unit in pairs(units) do
         local commands = unit.commands
         unit.commands = nil
