@@ -11,20 +11,32 @@ function widget:GetInfo()
 end
 
 
-local OriginalCmdColors = ""
+local OriginalCmdColors = nil
+local hadOriginalCmdColors = false
 
 function GetOriginalCmdColors()
     local f = io.open("cmdcolors.txt", "r")
-    for line in f:lines() do
-        OriginalCmdColors = OriginalCmdColors .. "line" .. "\n"
+    if f then
+        OriginalCmdColors = f:read("*a")
+        f:close()
+        hadOriginalCmdColors = true
+    else
+        OriginalCmdColors = nil
+        hadOriginalCmdColors = false
     end
-    f:close()
 end
 
 function WriteOriginalCmdColors()
-    local f = io.open("cmdcolors.txt", "w+")
-    f:write(OriginalCmdColors)
-    f:close()
+    if hadOriginalCmdColors and OriginalCmdColors then
+        local f = io.open("cmdcolors.txt", "w+")
+        if f then
+            f:write(OriginalCmdColors)
+            f:close()
+        end
+    else
+        os.remove("cmdcolors.txt")
+    end
+    Spring.SendCommands("cmdcolors")
 end
 
 local cmdColors = {
@@ -108,15 +120,16 @@ function widget:Initialize()
     
     -- edit cmdcolors.txt, then reload it
     local f = io.open("cmdcolors.txt","w+") -- erase file, open for writing
-    for _,line in ipairs(cmdColors) do
-        f:write(line .. "\n")
+    if f then
+        for _,line in ipairs(cmdColors) do
+            f:write(line .. "\n")
+        end
+        f:close()
+        Spring.SendCommands("cmdcolors")
     end
-    f:close()
-    
-    Spring.SendCommands("cmdcolors")
 end
 
-function widget:ShutDown()
+function widget:Shutdown()
     -- write the original cmdcolors.txt back
     -- user is screwed if this crashes, lol
     WriteOriginalCmdColors()    

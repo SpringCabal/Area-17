@@ -26,7 +26,7 @@ function SetBindings()
         --"Alt+b  debug",
         --"--Alt+v  debugcolvol",
 
-		"ctrl+q quitforce",
+		"ctrl+q reloadforce",
 
 		"f12 screenshot",
 
@@ -56,7 +56,6 @@ function widget:Initialize()
         Spring.SendCommands("unbindkeyset s")
 		Spring.SendCommands("unbindkeyset c")
 	else
-        Spring.SendCommands("unbindall") --muahahahaha
         Spring.SendCommands("unbindkeyset enter chat") --because because.
     end
     SetBindings()

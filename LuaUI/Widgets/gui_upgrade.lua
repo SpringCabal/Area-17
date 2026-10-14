@@ -15,6 +15,7 @@ local ufoDefID = UnitDefNames["ufo"].id
 
 require('keysym.lua')
 local UPGRADE_KEY = KEYSYMS.T
+local CLOSE_KEY = KEYSYMS.ESCAPE
 
 local vsx, vsy
 local landTextColor = {1, 1, 1, 1}
@@ -44,6 +45,10 @@ end
 
 local window
 function widget:KeyPress(key, mods, isRepeat)
+    if key == CLOSE_KEY and window then
+        ToggleUpgradeUI()
+        return true
+    end
     if ufoID and key == UPGRADE_KEY then
         ToggleUpgradeUI()
     end

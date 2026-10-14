@@ -136,7 +136,7 @@ function gadget:setUnitCommands(unitId, commands)
             params = command.params
         end
         if command.name ~= "BUILD_COMMAND" then
-            Spring.GiveOrderToUnit(unitId, CMD[command.name], params, {"shift"})
+            -- Spring.GiveOrderToUnit(unitId, CMD[command.name], params, {"shift"})
         else
             Spring.GiveOrderToUnit(unitId, -UnitDefNames[command.buildUnitDef].id, params, {"shift"})
         end

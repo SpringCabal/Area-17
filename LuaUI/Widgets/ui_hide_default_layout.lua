@@ -29,3 +29,14 @@ end
 function widget:GameSetup()
     return true, true
 end
+
+
+-- Direct UFO controls send LuaRules messages. Ordinary RTS commands issued
+-- by mouse or engine hotkeys must not control units during normal play.
+function widget:CommandNotify()
+    return Spring.GetGameRulesParam("devMode") ~= 1
+end
+
+
+-- The formation widget notifies per-unit orders before batching them.
+widget.UnitCommandNotify = widget.CommandNotify

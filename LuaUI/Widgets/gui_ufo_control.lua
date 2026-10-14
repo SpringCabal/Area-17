@@ -29,6 +29,7 @@ local N_9 = KEYSYMS.N_9
 
 local ufoID
 local ufoDefID = UnitDefNames["ufo"].id
+local trackedUFOID
 
 local cloak = 0
 
@@ -69,59 +70,88 @@ local function UpdateSpeed(newVal, values, default)
 	return values.average
 end
 
---[[
--- follow camera
-local function UpdateCamera()
-	if ufoID and not Spring.GetUnitIsDead(ufoID) and (Spring.GetGameRulesParam("devMode") ~= 1) then
-		--local x = Spring.GetGameRulesParam("ufo_x") or 0
-		--local y = Spring.GetGameRulesParam("ufo_y") or 0
-		--local z = Spring.GetGameRulesParam("ufo_z") or 0
-		
-		local vx, vy, vz = Spring.GetUnitVelocity(ufoID)
-		local x, y, z = Spring.GetUnitViewPosition(ufoID)
-
-		x, y, z = x + vx*LOOK_FORWARDS, y + vy*LOOK_FORWARDS, z + vz*LOOK_FORWARDS
-		
-		-- Apparent unit speed
-		local sx, sy, sz = x - lx, y - ly, z - lz
-		lx, ly, lz = x, y, z
-		
-		--Spring.Echo(math.floor(sx), math.floor(sz))
-		
-		--Spring.Echo(math.floor(x - wx), math.floor(z - wz))
-		--local ux, uy, uz = Spring.GetUnitPosition(ufoID)
-		--Spring.Echo(math.floor(x - ux), math.floor(z - uz))
-		
-		
-		sx = UpdateSpeed(sx, lastXSpeed)
-		sy = UpdateSpeed(sy, lastYSpeed)
-		sz = UpdateSpeed(sz, lastZSpeed)
-
-		curIndex = curIndex + 1
-		if curIndex > AVERAGE_SPEEDS then
-			curIndex = 1
-		end
-		
-		--Spring.Echo(math.floor(sx), math.floor(sz))
-		
-		-- has a slight delay which makes it smooth and gives a hint in which direction we're moving
-		cx, cy, cz = cx + sx, cy + sy, cz + sz
-		--Spring.SetCameraTarget(cx, cy + 25, cz, 0.4)
-
-		local newState = {
-			px = cx,
-			py = cy + 25,
-			pz = cz,
-			mode = 1,
-			flipped = -1,
-			fov = 45,
-			height = 2000,
-			angle = 0.4,
-		}
-		Spring.SetCameraState(newState, 0.4)
-	end
+local function SetCameraPosition(x, y, z, transition)
+	local newState = {
+		px = x,
+		py = y + 25,
+		pz = z,
+		mode = 1,
+		flipped = -1,
+		fov = 45,
+		height = 2000,
+		angle = 0.4,
+	}
+	Spring.SetCameraState(newState, transition)
 end
---]]
+
+local function GetCameraTarget()
+	if not ufoID or not Spring.ValidUnitID(ufoID) or Spring.GetUnitIsDead(ufoID) then
+		return nil
+	end
+
+	local x, y, z = Spring.GetUnitViewPosition(ufoID)
+	if not x then
+		return nil
+	end
+
+	local vx, vy, vz = Spring.GetUnitVelocity(ufoID)
+	vx, vy, vz = vx or 0, vy or 0, vz or 0
+	return x + vx * LOOK_FORWARDS, y + vy * LOOK_FORWARDS, z + vz * LOOK_FORWARDS
+end
+
+local function ResetCameraToUFO()
+	if Spring.GetGameRulesParam("devMode") == 1 then
+		return false
+	end
+
+	local x, y, z = GetCameraTarget()
+	if not x then
+		return false
+	end
+
+	-- Start the smoothing history at the UFO rather than at the map origin.
+	lx, ly, lz = x, y, z
+	cx, cy, cz = x, y, z
+	curIndex = 1
+	lastXSpeed = {average = 0}
+	lastYSpeed = {average = 0}
+	lastZSpeed = {average = 0}
+	SetCameraPosition(cx, cy, cz, 0)
+	Spring.SelectUnitArray({})
+	trackedUFOID = ufoID
+	return true
+end
+
+-- Follow the UFO explicitly. The engine's `track on` command is not reliable
+-- during startup and can leave the camera at the map's default corner.
+local function UpdateCamera()
+	if Spring.GetGameRulesParam("devMode") == 1 then
+		return
+	end
+
+	local x, y, z = GetCameraTarget()
+	if not x then
+		return
+	end
+
+	-- Apparent unit speed.
+	local sx, sy, sz = x - lx, y - ly, z - lz
+	lx, ly, lz = x, y, z
+
+	sx = UpdateSpeed(sx, lastXSpeed)
+	sy = UpdateSpeed(sy, lastYSpeed)
+	sz = UpdateSpeed(sz, lastZSpeed)
+
+	curIndex = curIndex + 1
+	if curIndex > AVERAGE_SPEEDS then
+		curIndex = 1
+	end
+
+	-- A small amount of smoothing keeps the camera movement comfortable while
+	-- preserving the original Lua camera's velocity lead.
+	cx, cy, cz = cx + sx, cy + sy, cz + sz
+	SetCameraPosition(cx, cy, cz, 0.4)
+end
 -------------------------------------------------------------------
 -------------------------------------------------------------------
 
@@ -232,13 +262,13 @@ function widget:GameFrame(n)
 	if mouseControl then
 		WeaponControl()
 	end
-	
-	--UpdateCamera()
 end
 
 function widget:Update()
-	Spring.SendCommands("trackoff", "track")
-	--UpdateCamera()
+	if ufoID and trackedUFOID ~= ufoID then
+		ResetCameraToUFO()
+	end
+	UpdateCamera()
 end
 
 function widget:MousePress(mx, my, button)
@@ -284,6 +314,7 @@ function widget:Initialize()
 		angle = 0.4,
 	}
 	Spring.SetCameraState(newState, 0.4)
+	ResetCameraToUFO()
 end
 
 function widget:UnitCreated(unitID, unitDefID, unitTeam)
@@ -293,14 +324,14 @@ function widget:UnitCreated(unitID, unitDefID, unitTeam)
 			WG.UI.SetAbilityEnabled(currentWeapon, true)
 			Spring.SendLuaRulesMsg('changeWeapon|' .. currentWeapon)
 		end
-		Spring.SelectUnitArray({ufoID})
-		Spring.SendCommands("track")
-		Spring.SelectUnitArray({})
+		ResetCameraToUFO()
 	end
 end
 
 function widget:UnitDestroyed(unitID, unitDefID, unitTeam)
 	if ufoID == unitID then
+		Spring.SendCommands("track off")
 		ufoID = nil
+		trackedUFOID = nil
 	end
 end

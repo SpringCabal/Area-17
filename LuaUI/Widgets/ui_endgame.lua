@@ -107,6 +107,7 @@ local function SetupControls()
 --  		textColor = {1,0,0,1},
 --  	}
 	
+    if WG.analytics and WG.analytics.SendEvent then
 	nameBox = Chili.EditBox:New{
 		parent = window_endgame,
 		x = 50,
@@ -157,6 +158,18 @@ local function SetupControls()
 		end},
 	}
 
+    else
+        Chili.Label:New {
+            parent = window_endgame,
+            x = 50,
+            y = 255,
+            width = 300,
+            height = 30,
+            caption = "Leaderboard unavailable",
+            fontsize = 22,
+        }
+    end
+
 --     restartButton = Button:New{
 -- 		bottom  = 30;
 -- 		width   = 90;
@@ -191,14 +204,12 @@ local function SetupControls()
 			function() 
 				nameBox = nil
 				restartButton = nil
-				Spring.SendCommands("quit","quitforce") 
+				Spring.SendCommands("reloadforce")
 			end
 		};
 		parent = window_endgame;
 	}
     
-	screen0:AddChild(window_endgame)
-
 end
 
 --------------------------------------------------------------------------------
@@ -277,8 +288,6 @@ function widget:GameOver(winningAllyTeams)
         if myAllyTeamID == winningAllyTeamID then
             Spring.SendCommands("endgraph 0")
             SetupControls()
-            caption:SetCaption("The Queen is saved!");
-            caption.font.color={0,1,0,1};
             ShowEndGameWindow()
             return
         end
@@ -287,5 +296,3 @@ function widget:GameOver(winningAllyTeams)
     SetupControls()
     ShowEndGameWindow()
 end
-
-
