@@ -311,9 +311,6 @@ local function GetCameraHeight()
 end
 
 local function ProjectileLevelOfDetailCheck(param, proID, fps, height)
-	if true then
-		return true
-	end
 	if param.cameraHeightLimit and param.cameraHeightLimit < height then
 		if param.cameraHeightLimit*3 > height then
 			local fraction = param.cameraHeightLimit/height
@@ -331,8 +328,8 @@ local function ProjectileLevelOfDetailCheck(param, proID, fps, height)
 		return true
 	end
 
-	if fps < 0 then
-		local fraction = fps/60
+	if fps < 60 then
+		local fraction = math.max(0.1, fps/60)
 		local ratio = 1/fraction
 		return (proID%ratio < 1)
 	end
@@ -377,8 +374,6 @@ local function GetBeamLights(lightParams, pID, x, y, z)
 		param = (doOverride and overrideParam) or lightParams,
 		beam = true
 	}
-
-	Spring.Echo(lightParams)
 
 	if lightParams.fadeTime then
 		timeToLive = timeToLive or Spring.GetProjectileTimeToLive(pID)

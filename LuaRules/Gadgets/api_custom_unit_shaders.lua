@@ -443,6 +443,11 @@ end
 
 function gadget:Initialize()
   --// check user configs
+  -- Area 17 relies on the normalmapped unit shader and its ground shadows.
+  -- The menu/headless defaults may leave the engine shadow pass disabled;
+  -- request it before compiling the material shaders.
+  Spring.SetConfigInt("Shadows", 1)
+  Spring.SendCommands("shadows 1")
   shadows = Spring.HaveShadows()
   advShading = Spring.HaveAdvShading()
   normalmapping = (Spring.GetConfigInt("NormalMapping", 1)>0)
