@@ -14,6 +14,7 @@ end
 -------------------------------------------------------------------
 
 require('keysym.lua')
+local controls = VFS.Include("LuaHandler/Utilities/game_controls.lua")
 local UP = KEYSYMS.UP
 local DOWN = KEYSYMS.DOWN
 local LEFT = KEYSYMS.LEFT
@@ -205,6 +206,9 @@ end
 
 -- handles weapon switching and abilities
 function widget:KeyPress(key, mods, isRepeat)
+	if controls.IsWriting() then
+		return false
+	end
 	if ufoID then
 		for _, abilityName in pairs(abilities) do
 			local cd = Spring.GetGameRulesParam(abilityName .. "CD") or 0
@@ -253,6 +257,11 @@ function widget:GameFrame(n)
 	if not ufoID then
 		return
 	end
+	if controls.IsWriting() then
+		Spring.SendLuaRulesMsg('movement|0|0')
+		keyControl, mouseControl = false, false
+		return
+	end
 	
 	AimingControl()
 	if keyControl then
@@ -272,6 +281,9 @@ function widget:Update()
 end
 
 function widget:MousePress(mx, my, button)
+	if controls.IsWriting() then
+		return false
+	end
 	local alt, ctrl, meta, shift = Spring.GetModKeyState()
 	if button == 1 and not Spring.IsAboveMiniMap(mx, my) then
 		local _, pos = Spring.TraceScreenRay(mx, my, true)
