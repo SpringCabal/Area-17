@@ -37,3 +37,6 @@ pub use unit_ufo_abduction::UnitUfoAbductionGadget;
 pub use unit_ufo_controller::UnitUfoControllerGadget;
 pub use upgrades::UpgradesGadget;
 pub use weapon_handlers::WeaponHandlersGadget;
+
+pub mod unit_scripts;
+pub use unit_scripts::UnitScriptsGadget;

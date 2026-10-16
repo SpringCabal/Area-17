@@ -24,6 +24,7 @@ pub fn setup(handler: &mut GadgetHandler<Global>) {
             UpgradesGadget::new(),
             GameTerrainGadget::new(),
             UnitSetupGadget::new(),
+            UnitScriptsGadget::new(),
             ApiStatusGadget::new(),
             UnitBuildingsGadget::new(),
         ]

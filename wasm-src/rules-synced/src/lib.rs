@@ -2,6 +2,7 @@ extern crate alloc;
 
 pub mod abduction;
 pub mod civilians;
+pub mod cus_scripts;
 pub mod definitions;
 pub mod defs;
 pub mod diagnostics;
@@ -19,6 +20,8 @@ pub mod upgrades;
 pub mod visual_integration;
 pub mod weapon_multishot;
 pub mod weapons;
+
+spring::export_core_cus!(cus_scripts::Area17CusModule);
 
 spring_addons::export_rules_gadgets! {
     state: state::Global,

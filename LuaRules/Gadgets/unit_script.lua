@@ -1,12 +1,3 @@
--- Wiki: http://springrts.com/wiki/Gamedev:Glossary#springcontent.sdz
--- See also; http://springrts.com/wiki/Animation-LuaScripting
-
--- Author: Tobi Vollebregt
--- Enables Lua unit scripts by including the gadget from springcontent.sdz
-
--- Uncomment to override the directory which is scanned for *.lua unit scripts.
-UNITSCRIPT_DIR = "scripts/"
-
-VFS.Include("LuaRules/Utilities/tech.lua")
-GG.Tech = Tech
-return include("luagadgets/gadgets/unit_script.lua")
+-- Area 17 unit behavior is implemented by the Rust/Core-CUS module.
+-- Keep this file as an empty compatibility surface for the base loader.
+return {}

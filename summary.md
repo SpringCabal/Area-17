@@ -1,12 +1,3 @@
-# Gameplay/UI port with Lua unit scripts
-
-This is the first of two port commits on the revised Lua history. The gameplay,
-UI, weapons, economy, and verification code are the preserved Rust port, with
-Lua fixes carried across. The original port architecture is described below;
-its Core-CUS section describes the second commit rather than this intermediate
-version. Here `script_bridge.rs` and `wasm_script_bridge.lua` dispatch to the
-unchanged Lua Scripts directory, with its normal scheduler.
-
 # Area 17 WASM: how it is built
 
 Two WASM modules, registered in `LuaRules/wasm/manifest.txt` and
@@ -100,3 +91,14 @@ Lua observer, `verification/fixtures/area17/scenario.lua`, staged into the
 test copy only) and `area17 visual` (the `e2e` build clicks the HUD and sends
 the UI's input, and screenshots are compared with goldens). The `shared`
 crate's host tests run with `just test` in `wasm-src/`.
+
+
+## Revised Lua parent
+
+The port consists of two commits above the revised Lua game. Gameplay/UI comes
+first with unchanged Lua scripts and a numeric bridge; the second installs
+Core-CUS. Lua's slope-impact rebound and point-defense reload fixes are applied
+in rules code. Movement speed comes from unchanged unit definitions, avoiding
+an extra reduction when a tank resumes wandering. The Core-CUS tank alternates
+barrels and tank/AA aim threads wait for their piece turns before reporting
+readiness. Existing tests, assets, diagnostics and port choices are retained.

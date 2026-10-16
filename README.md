@@ -1,6 +1,6 @@
 # Area 17 WASM
 
-The Rust/WASM version of Area 17. Gameplay and the HUD are Rust modules; unit scripts run in Lua; unit, weapon and effect definitions stay Lua data. [`summary.md`](summary.md) describes the modules, and [`original-vs-wasm.md`](original-vs-wasm.md) maps each file of the Lua original game to the code that replaces it. Build instructions are in the [development repository](https://github.com/gajop/springcabal-dev).
+The Rust/WASM version of Area 17. Gameplay, the unit scripts and the HUD are Rust modules; unit, weapon and effect definitions stay Lua data. [`summary.md`](summary.md) describes the modules, and [`original-vs-wasm.md`](original-vs-wasm.md) maps each file of the Lua original game to the code that replaces it. Build instructions are in the [development repository](https://github.com/gajop/springcabal-dev).
 
 ## Differences from the Lua version
 

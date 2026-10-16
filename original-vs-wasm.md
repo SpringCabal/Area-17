@@ -1,8 +1,3 @@
-The first port commit keeps every file in `Scripts/` identical to the revised
-Lua tip. `wasm_script_bridge.lua` registers numeric calls outside that directory.
-The Core-CUS entries below describe the second port commit. Movement attributes
-are applied from the unchanged definitions to both aircraft and ground units.
-
 # Area 17 original-to-WASM comparison
 
 The left side is a file of the Lua original, `Area-17.sdd`; the right side
@@ -21,8 +16,8 @@ is the active WASM implementation or the reason a file remains Lua/unused.
 | `lups_wrapper.lua` | none | Optional LUPS integration, not gameplay |
 | `typemap_control.lua` | none | Debug/map typemap control, not gameplay |
 | `ui_chonsole_load.lua` | none | Console compatibility helper, not gameplay |
-| `unit_attributes.lua` | `definitions::set_move_speed_multiplier` (ground units) | The UFO's MoveType speed and acceleration are not scaled |
-| `unit_buildings.lua` | `buildings.rs` | Explosive-building destruction behavior ported |
+| `unit_attributes.lua` | `definitions::set_move_speed_multiplier`, `set_gunship_attributes` | Aircraft and ground units receive Lua's live attribute speeds; definitions stay unchanged |
+| `unit_buildings.lua` | `gadgets/unit_buildings.rs` | Explosive-building destruction behavior ported |
 | `unit_centeroffset.lua` | `definitions.rs` | Area 17 collision-volume geometry configured from typed definitions |
 | `unit_civilian_spawner.lua` | `civilians.rs` | Initial populations, activation, wandering, replenishment, and flee behavior ported |
 | `unit_drones.lua` | `drones.rs` | Tech-gated spawning and fight/move orders ported |
@@ -75,7 +70,7 @@ is the active WASM implementation or the reason a file remains Lua/unused.
 | `Widgets/gfx_lups_manager.lua`, `gfx_lups_smokesignal.lua` | none | Optional LUPS effects |
 | `Widgets/gfx_projectile_lights.lua` | engine weapon/effect rendering | No custom gameplay state |
 | `Widgets/gfx_ufo_beam.lua` | `widgets/gfx_volumes.rs` | Beam position/state and volume draw ported |
-| `Widgets/glVolumes.lua` | `widgets/gfx_volumes.rs` | Direct typed stencil-volume geometry port |
+| `Utilities/glVolumes.lua` | `widgets/gfx_volumes.rs` | Direct typed stencil-volume geometry port |
 | `Widgets/gui_abilities.lua` | `rml/loadout.rs`, `widgets/gui_ufo_control.rs` | Unlocked ability rows, cooldowns, and keys ported |
 | `Widgets/gui_chili_docking.lua`, `gui_chili_selections_and_cursortip.lua`, `gui_chiliguidemo.lua` | none | Generic Chili widgets replaced or irrelevant |
 | `Widgets/gui_disable_camera_control.lua` | `widgets/gui_camera.rs` | Fixed camera geometry ported |
@@ -101,4 +96,13 @@ is the active WASM implementation or the reason a file remains Lua/unused.
 ## Tests
 
 The repository's `area17 static`, `area17 headless` and `area17 visual`
-suites; see [`../summary.md`](../summary.md).
+suites; see [`summary.md`](summary.md).
+
+
+## Commit boundary
+
+The gameplay/UI commit keeps `Scripts/` byte-for-byte identical to its Lua
+parent. It retains the Lua loader and utilities, and registers numeric calls in
+`LuaRules/Gadgets/wasm_script_bridge.lua`. The unit-script commit replaces this
+adapter and the Lua scripts with Core-CUS, keeping gameplay callers behind
+`script_bridge.rs`. Both commits build and run independently.
