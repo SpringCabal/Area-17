@@ -1,0 +1,488 @@
+body {
+  position: absolute;
+  left: 0dp;
+  right: 0dp;
+  top: 0dp;
+  bottom: 0dp;
+  font-family: FreeSans;
+  color: #ffffff;
+  font-size: 20dp;
+  pointer-events: none;
+}
+
+body * { pointer-events: none; }
+
+/* ui_stats.lua: two 50px icon/value pairs anchored to the top-right. */
+#resources {
+  position: absolute;
+  top: 0dp;
+  right: 10dp;
+  width: 250dp;
+  height: 100dp;
+}
+
+.resource-row {
+  position: absolute;
+  top: 0dp;
+  right: 0dp;
+  height: 50dp;
+  width: 250dp;
+}
+
+.resource-row:nth-child(2) { right: 140dp; }
+
+.resource-row img {
+  position: absolute;
+  right: 0dp;
+  top: 0dp;
+  width: 50dp;
+  height: 50dp;
+}
+
+.resource-row span {
+  position: absolute;
+  right: 50dp;
+  top: 10dp;
+  width: 100dp;
+  font-size: 20dp;
+  text-align: left;
+  line-height: 40dp;
+}
+
+#biomass { color: #50d750; }
+#research { color: #02b4fa; }
+
+/* gui_abilities.lua: a 200px stack of the original tab textures. */
+#weapons {
+  position: absolute;
+  left: 0dp;
+  bottom: 0dp;
+  width: 200dp;
+  height: 650dp;
+}
+
+.weapon-slot {
+  position: absolute;
+  left: 0dp;
+  width: 200dp;
+  height: 50dp;
+  decorator: image(UI/tab-disabled.png);
+  color: #888888;
+  font-size: 16dp;
+  line-height: 50dp;
+}
+
+.weapon-slot.selected {
+  decorator: image(UI/tab+circle.png);
+  color: #00ccff;
+}
+
+.weapon-slot.disabled { opacity: 0.45; }
+
+.weapon-label {
+  position: absolute;
+  left: 16dp;
+  top: 22dp;
+  right: 0dp;
+  font-size: 16dp;
+  line-height: 20dp;
+  color: #b9dcf0;
+}
+
+#tech-toggle {
+  position: absolute;
+  left: 50%;
+  top: 0dp;
+  margin-left: -175dp;
+  width: 350dp;
+  height: 100dp;
+  pointer-events: auto;
+}
+
+#tech-toggle .technology {
+  position: absolute;
+  left: 0dp;
+  top: 0dp;
+  width: 350dp;
+  height: 100dp;
+  decorator: image(../../UI/upgrade.png);
+}
+
+#tech-toggle .technology-title {
+  position: absolute;
+  left: 82dp;
+  top: 20dp;
+  color: #00ccff;
+  font-size: 25dp;
+  line-height: 30dp;
+}
+
+#tech-toggle .technology-notice {
+  position: absolute;
+  left: 85dp;
+  top: 49dp;
+  color: #ffffff;
+  font-size: 20dp;
+  line-height: 24dp;
+  animation: technology-notice-pulse 0.6s alternate infinite;
+}
+
+#tech-toggle .technology.inactive { opacity: 0.45; }
+#tech-toggle .technology-title.inactive { color: #aaaaaa; }
+#tech-toggle .technology-notice.inactive { display: none; }
+
+#tech-toggle:hover .technology-title { color: #ffffff; }
+
+@keyframes technology-notice-pulse {
+  from { opacity: 0.45; }
+  to { opacity: 1.0; }
+}
+
+/* ui_health.lua/ui_shield.lua: Chili creates two independent windows, each
+   at x=35%, width=17%, height=5%. The health window's bottom edge is 1% from
+   the bottom of the screen; the shield window's is 6% from the bottom. */
+.status-window {
+  position: absolute;
+  left: 35%;
+  width: 17%;
+  height: 5%;
+}
+
+#health-bar-window { bottom: 1%; }
+#shield-bar-window { bottom: 6%; }
+
+.status-icon {
+  position: absolute;
+  left: 0dp;
+  top: 50%;
+  width: 42dp;
+  height: 42dp;
+  margin-top: -21dp;
+}
+
+.status-control {
+  position: absolute;
+  left: 52dp;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.status-track {
+  position: absolute;
+  left: 10dp;
+  right: 10dp;
+  top: 12dp;
+  bottom: 12dp;
+  decorator: tiled-box(
+    progress-empty-tl.png,
+    progress-empty-t.png,
+    progress-empty-tr.png,
+    progress-empty-l.png,
+    progress-empty-c.png,
+    progress-empty-r.png,
+    progress-empty-bl.png,
+    progress-empty-b.png,
+    progress-empty-br.png
+  );
+  image-color: #ffffff;
+  overflow: hidden;
+}
+
+.status-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  min-width: 0dp;
+  decorator: tiled-box(
+    progress-full-tl.png,
+    progress-full-t.png,
+    progress-full-tr.png,
+    progress-full-l.png,
+    progress-full-c.png,
+    progress-full-r.png,
+    progress-full-bl.png,
+    progress-full-b.png,
+    progress-full-br.png
+  );
+  image-color: #00bb00;
+  z-index: 1;
+}
+
+.status-caption {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  text-align: center;
+  color: #ffffff;
+  font-size: 14dp;
+  font-weight: bold;
+  line-height: 32dp;
+  z-index: 3;
+}
+
+#abilities {
+  position: absolute;
+  left: 0dp;
+  bottom: 0dp;
+  width: 150dp;
+  height: 250dp;
+  color: #00ccff;
+  font-size: 16dp;
+}
+
+.ability {
+  position: absolute;
+  left: 0dp;
+  width: 150dp;
+  height: 50dp;
+}
+
+.ability-label {
+  position: absolute;
+  left: 10dp;
+  top: 0dp;
+  height: 17dp;
+  color: #00ccff;
+  font-size: 16dp;
+  line-height: 17dp;
+}
+
+.ability-track {
+  position: absolute;
+  left: 0dp;
+  bottom: 0dp;
+  width: 150dp;
+  height: 30dp;
+  decorator: tiled-box(
+    progress-empty-tl.png,
+    progress-empty-t.png,
+    progress-empty-tr.png,
+    progress-empty-l.png,
+    progress-empty-c.png,
+    progress-empty-r.png,
+    progress-empty-bl.png,
+    progress-empty-b.png,
+    progress-empty-br.png
+  );
+  overflow: hidden;
+}
+
+.ability-fill {
+  position: absolute;
+  left: 0dp;
+  top: 0dp;
+  bottom: 0dp;
+  decorator: tiled-box(
+    progress-full-tl.png,
+    progress-full-t.png,
+    progress-full-tr.png,
+    progress-full-l.png,
+    progress-full-c.png,
+    progress-full-r.png,
+    progress-full-bl.png,
+    progress-full-b.png,
+    progress-full-br.png
+  );
+}
+
+.ability-track.active .ability-fill { image-color: #ffffff; }
+.ability-track.cooldown .ability-fill { image-color: #0099cc; }
+.ability-track.ready .ability-fill { image-color: #ccddee; }
+
+.ability-caption {
+  position: absolute;
+  left: 0dp;
+  right: 0dp;
+  top: 0dp;
+  bottom: 0dp;
+  color: #ffffff;
+  font-size: 14dp;
+  font-weight: bold;
+  line-height: 30dp;
+  text-align: center;
+}
+
+#events {
+  position: absolute;
+  left: 25%;
+  right: 25%;
+  top: 12%;
+  bottom: 18%;
+  overflow: hidden;
+  text-align: right;
+}
+
+.event-line {
+  position: absolute;
+  left: 0dp;
+  right: 0dp;
+  height: 34dp;
+  font-size: 24dp;
+  font-weight: bold;
+  text-align: right;
+}
+
+/* gui_upgrade.lua: Chili.Window x=200, width=400, bottom=100, height=500. */
+#tech-panel, #endgame {
+  position: absolute;
+  left: 0dp;
+  right: 0dp;
+  top: 0dp;
+  bottom: 0dp;
+  text-align: center;
+}
+
+#tech-panel .tech-window {
+  position: absolute;
+  left: 50%;
+  margin-left: -310dp;
+  bottom: 60dp;
+  width: 620dp;
+  height: 520dp;
+  background-color: #11182b;
+  border-width: 2dp;
+  border-color: #1d8fbe;
+  pointer-events: auto;
+  text-align: left;
+}
+
+.tech-title {
+  position: absolute;
+  left: 10dp;
+  top: 10dp;
+  color: #00ccff;
+  font-size: 30dp;
+  line-height: 36dp;
+}
+
+.tech-ship {
+  position: absolute;
+  right: 10dp;
+  top: 0dp;
+  width: 220dp;
+  height: 100dp;
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+.tech-card {
+  position: absolute;
+  width: 60dp;
+  height: 60dp;
+  background-color: #4b5362;
+  border-width: 1dp;
+  border-color: #161b25;
+  pointer-events: auto;
+  overflow: visible;
+}
+
+.tech-card > img:first-child {
+  position: absolute;
+  left: 7dp;
+  top: 7dp;
+  width: 45dp;
+  height: 45dp;
+}
+
+.tech-card .tech-lock {
+  position: absolute;
+  left: 2dp;
+  bottom: 3dp;
+  width: 12dp;
+  height: 16dp;
+}
+
+.tech-card .tech-level {
+  position: absolute;
+  right: 3dp;
+  bottom: 3dp;
+  color: #ffffff;
+  font-size: 12dp;
+  line-height: 14dp;
+  z-index: 2;
+}
+
+.tech-card.disabled { background-color: #28303d; opacity: 0.65; }
+.tech-card.affordable { border-color: #50d750; }
+.tech-card.unaffordable { border-color: #c68b46; background-color: #353c49; }
+.tech-card.complete { background-color: #3f8051; }
+.tech-card:hover { border-color: #ffffff; background-color: #697484; }
+.tech-card.disabled:hover { background-color: #414a58; }
+.tech-card.unaffordable:hover { border-color: #ffd166; background-color: #515763; }
+
+.tech-help {
+  position: absolute;
+  left: 250dp;
+  right: 18dp;
+  top: 120dp;
+  color: #aaaaaa;
+  font-size: 14dp;
+  line-height: 22dp;
+}
+
+#tech-tooltip {
+  position: absolute;
+  left: 250dp;
+  right: 12dp;
+  top: 120dp;
+  padding: 12dp;
+  background-color: #0a1020;
+  border-width: 1dp;
+  border-color: #187fa8;
+  color: #d8efff;
+  font-size: 14dp;
+  line-height: 20dp;
+  pointer-events: none;
+  z-index: 3;
+}
+
+#tech-tooltip > div { display: block; margin-bottom: 8dp; }
+.tech-tooltip-title { color: #00ccff; font-size: 20dp; font-weight: bold; }
+.tech-tooltip-description { color: #ffffff; }
+.tech-tooltip-cost { color: #ffffff; }
+#tech-tooltip.affordable #tech-tooltip-status { color: #50d750; }
+#tech-tooltip.unaffordable #tech-tooltip-status { color: #ffd166; }
+#tech-tooltip.disabled #tech-tooltip-status { color: #aaaaaa; }
+#tech-tooltip.complete #tech-tooltip-status { color: #50d750; }
+
+#tech-close {
+  position: absolute;
+  right: 10dp;
+  bottom: 10dp;
+  width: 120dp;
+  height: 40dp;
+  background-color: #25445f;
+  border-width: 1dp;
+  border-color: #00ccff;
+  color: #ffffff;
+  font-size: 16dp;
+  line-height: 40dp;
+  text-align: center;
+  pointer-events: auto;
+}
+
+#tech-close:hover { background-color: #376a8c; }
+
+.endgame-panel {
+  position: absolute;
+  left: 25%;
+  right: 25%;
+  top: 35%;
+  padding: 26dp;
+  background-color: #101426;
+  border-width: 2dp;
+  border-color: #ffe66d;
+  color: #ffe66d;
+  font-size: 32dp;
+}
+
+.endgame-panel small {
+  display: block;
+  margin-top: 12dp;
+  color: #ffffff;
+  font-size: 16dp;
+}

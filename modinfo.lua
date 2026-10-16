@@ -1,9 +1,9 @@
 local modinfo = {
-	name = "Area 17",
-	shortname = "ALIR",
-	game = "Area 17",
-	shortgame = "ALIR",
-    version = "$VERSION",
+	name = "Area 17 WASM",
+	shortname = "ALIRW",
+	game = "Area 17 WASM",
+	shortgame = "ALIRW",
+	version = "$VERSION",
 	description = "Alien resources",
 	
 	modtype = "1",

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 744.09448819 1052.3622047"
+   id="svg4150"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="beam.svg">
+  <defs
+     id="defs4152">
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter4758"
+       x="-0.12923304"
+       width="1.2584661"
+       y="-0.13488803"
+       height="1.2697761">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="3.4378396"
+         id="feGaussianBlur4760" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.4"
+     inkscape:cx="245.44292"
+     inkscape:cy="805.98688"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1024"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata4155">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:#ffff00;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1.05227971px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;filter:url(#filter4758)"
+       d="m 265.04206,263.42477 c 63.84447,0 63.84447,0 63.84447,0 l -28.69674,-55.1822 -3.11278,-5.98568 z"
+       id="path4704"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/gajop/.spring/games/AlienResources.sdd/LuaUI/Images/coneUpgrade.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90" />
+    <image
+       y="167.71936"
+       x="237.64285"
+       id="image6468"
+       xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHwAAAAyCAYAAACeTL+iAAAABHNCSVQICAgIfAhkiAAAAeNJREFU eJzt2j1OwzAUwPHXioUuPQELIwPXyBSJgTswsjP1BgiJhZkdIWVAPQYLIxIMnCBCnVqmoFKS+LPO c/P/jdDYL37PjuNWBAAAAAAAAAAAAEAmyrLcjLHvWKZDB4C0skq4hhmmIYYQWSV8W1mWmxSDn6qf VLJNOPyQ8JGZDB2ADa1LalVVWYzfNlUBa02sK82FkDSwkIQWRREzlGDL5dL72iELInrHobNUW2Jd hRSCyP6LIbhx1wRX14vQLrNW3i2cPh+7AIIa60r22JPqq6sYYibdqiHTLM59GdbK9HjwKYR/F7gu 0SR7v1z3BKYi+PPPvmSTWF36CqEv6UdtfyS5+rXlyGY14Gh1ZFpneFulMOt18X3f9960UQBp2SbY adPWhdeyYSR5LbNhKgAOXvyYTuFiHMBwtJpY1kerbWwKwPQI2F3KtD4yXOO0eQ6r//LERVMMfQPj svtMVQixYmraOaivR/u0zf5mgHYHtRkU7T+K6Iqz6762rxlC8o5tE2galNSFECueoX8NM2jnu4MU dTCunmfycPEtInL78jW/fzyevn/Wp5v6TWQuH1Kc1XJzsvr9/PnTTCbrtbxerjrbtLTX+wqkJuGa BiUGrffGWTrS0r4pC3HI9wYAAAAglh+hdc4mEjAkaAAAAABJRU5ErkJggg== "
+       preserveAspectRatio="none"
+       height="50"
+       width="124"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90"
+       inkscape:export-filename="/home/gajop/.spring/games/AlienResources.sdd/LuaUI/Images/coneUpgrade.png" />
+  </g>
+</svg>

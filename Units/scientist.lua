@@ -8,6 +8,8 @@ local Scientist = Unit:New {
 	-- Movement
 	acceleration           = 0.5,
 	brakeRate              = 0.5,
+	-- Matches the original definition. WASM applies the effective 2 elmos/s
+	-- profile and the 2.5x flee profile through typed MoveCtrl calls.
 	maxVelocity            = 40,
 	turnRate               = 3000,
 	footprintX             = 1,

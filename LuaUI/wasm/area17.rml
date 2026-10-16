@@ -1,0 +1,40 @@
+<rml>
+  <head>
+    <link type="text/rcss" href="area17.rcss" />
+    <title>Area 17</title>
+  </head>
+  <body data-model="area17">
+    <div id="resources">
+      <div class="resource-row"><img src="UI/biomass.png" /><span id="biomass">{{biomass}}</span></div>
+      <div class="resource-row"><img src="UI/research.png" /><span id="research">{{research}}</span></div>
+    </div>
+
+    <div id="weapons"></div>
+    <div id="tech-toggle" data-event-click="techToggle"></div>
+
+    <div id="health-bar-window" class="status-window">
+      <img class="status-icon" src="heart.png" />
+      <div class="status-control">
+        <div class="status-track" id="health-bar">
+          <div class="status-fill" data-style-width="health" data-style-image-color="health_color"></div>
+          <div class="status-caption">{{health_caption}}</div>
+        </div>
+      </div>
+    </div>
+    <div id="shield-bar-window" class="status-window">
+      <img class="status-icon" src="shield-no-ship.png" />
+      <div class="status-control">
+        <div class="status-track" id="shield-bar">
+          <div class="status-fill" data-style-width="shield" data-style-image-color="shield_color"></div>
+          <div class="status-caption">{{shield_caption}}</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="abilities"></div>
+    <div id="events"></div>
+    <div id="tech-panel"></div>
+    <div id="endgame"></div>
+
+  </body>
+</rml>

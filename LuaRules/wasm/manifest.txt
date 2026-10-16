@@ -1,0 +1,5 @@
+# Area 17 keeps authoritative rules and local UI in separate environments.
+# World presentation is drawn by the UI environment; the empty unsynced rules
+# scaffold remains in wasm-src for future unsynced-only effects but is not
+# registered until it has actual call-ins.
+module(area17-rules, LuaRules/wasm/area17-rules.wasm, rules-synced, 0, 1.0.0)

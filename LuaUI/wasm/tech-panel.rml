@@ -1,0 +1,20 @@
+<div class="tech-window" data-if="tech_open">
+  <div class="tech-title">TECH TREE</div>
+  <img class="tech-ship" src="../../UI/wireframe.png"/>
+  <div class="tech-grid">
+    <div class="tech-card" data-for="tech : technology" data-if="tech.visible" data-attr-id="'tech-card-' + tech.index" data-attr-class="tech.class" data-style-left="tech.left" data-style-top="tech.top" data-event-click="techActivate(tech.index)" data-event-mouseover="techHover(tech.index)" data-event-mouseout="techLeave(tech.index)">
+      <img data-attr-src="tech.icon"/>
+      <img class="tech-lock" src="../../UI/key.png" data-if="tech.locked"/>
+      <span class="tech-level" data-attr-id="'tech-level-' + tech.index">{{tech.level}}/{{tech.maximum}}</span>
+    </div>
+  </div>
+  <div class="tech-help">Hover to inspect. Click to unlock or upgrade.<br/>Green: affordable<br/>Amber: insufficient resources<br/>Grey: prerequisites missing</div>
+  <div id="tech-tooltip" data-if="tooltip_visible" data-attr-class="tooltip_class">
+    <div class="tech-tooltip-title">{{tooltip_title}}</div>
+    <div id="tech-tooltip-level">{{tooltip_level}}</div>
+    <div id="tech-tooltip-effect" class="tech-tooltip-description">{{tooltip_description}}</div>
+    <div id="tech-tooltip-cost" class="tech-tooltip-cost">{{tooltip_cost}}</div>
+    <div id="tech-tooltip-status">{{tooltip_status}}</div>
+  </div>
+  <div id="tech-close" data-event-click="techClose">Close (T)</div>
+</div>

@@ -1,0 +1,24 @@
+[package]
+name = "area17-ui-wasm"
+version = "0.1.0"
+edition = "2024"
+publish = false
+build = "../build.rs"
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = []
+diagnostics = []
+e2e = ["diagnostics"]
+
+[dependencies]
+spring = { workspace = true }
+spring-addons = { workspace = true }
+springcabal = { workspace = true }
+springcabal-control = { workspace = true }
+area17-shared = { path = "../shared" }
+
+[lints]
+workspace = true

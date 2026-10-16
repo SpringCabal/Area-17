@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 744.09448819 1052.3622047"
+   id="svg4841"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="black-hole.svg">
+  <defs
+     id="defs4843">
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter7393"
+       x="-0.089024579"
+       width="1.1780492"
+       y="-0.081152069"
+       height="1.1623041">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="2.335234"
+         id="feGaussianBlur7395" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter7397"
+       x="-0.081560222"
+       width="1.1631204"
+       y="-0.088213521"
+       height="1.176427">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="2.6126395"
+         id="feGaussianBlur7399" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter7401"
+       x="-0.089024579"
+       width="1.1780492"
+       y="-0.081152069"
+       height="1.1623041">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="2.335234"
+         id="feGaussianBlur7403" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter7405"
+       x="-0.081210115"
+       width="1.1624202"
+       y="-0.089234979"
+       height="1.17847">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="2.3352339"
+         id="feGaussianBlur7407" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter7409"
+       x="-0.089685698"
+       width="1.1793714"
+       y="-0.081524073"
+       height="1.1630481">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="2.6126395"
+         id="feGaussianBlur7411" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter7533"
+       x="-0.336"
+       width="1.672"
+       y="-0.336"
+       height="1.672">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="8.5000002"
+         id="feGaussianBlur7535" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.9500212"
+     inkscape:cx="372.04724"
+     inkscape:cy="865.67621"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1024"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata4846">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="opacity:1;fill:#be6100;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3.19199991;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;filter:url(#filter7533)"
+       id="path5404"
+       sodipodi:type="arc"
+       sodipodi:cx="293.72009"
+       sodipodi:cy="165.79184"
+       sodipodi:rx="30.357143"
+       sodipodi:ry="30.357143"
+       sodipodi:start="3.1319584"
+       sodipodi:end="3.1022704"
+       d="m 263.36436,166.0843 a 30.357143,30.357143 0 0 1 29.83798,-30.64519 30.357143,30.357143 0 0 1 30.8658,29.60971 30.357143,30.357143 0 0 1 -29.37981,31.08472 30.357143,30.357143 0 0 1 -31.30191,-29.1483"
+       sodipodi:open="true"
+       inkscape:export-filename="/home/gajop/.spring/games/AlienResources.sdd/LuaUI/Images/black-hole.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90" />
+    <path
+       sodipodi:type="spiral"
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.80000019;stroke-dasharray:39.99999991, 9.99999998, 4.99999999, 9.99999998;stroke-dashoffset:0;stroke-opacity:1;filter:url(#filter7409)"
+       id="path5478"
+       sodipodi:cx="120.77465"
+       sodipodi:cy="261.06161"
+       sodipodi:expansion="1"
+       sodipodi:revolution="3"
+       sodipodi:radius="42.078167"
+       sodipodi:argument="-16.878855"
+       sodipodi:t0="0"
+       d="m 120.77465,261.06161 c -0.82138,1.94328 -3.02473,-0.14846 -3.22984,-1.36519 -0.55584,-3.29725 3.12114,-5.35567 5.96023,-5.09449 5.07846,0.46719 7.8575,5.90416 6.95914,10.55527 -1.31838,6.82568 -8.71725,10.41221 -15.1503,8.82379 -8.57425,-2.11712 -12.98818,-11.54001 -10.68844,-19.74534 2.89398,-10.32557 14.36712,-15.57488 24.34037,-12.55309 12.07894,3.65979 18.16775,17.19665 14.41774,28.93541 -4.41925,13.83372 -20.02767,20.76448 -33.53045,16.28239 -15.589491,-5.17475 -23.363794,-22.85968 -18.147037,-38.12549 5.92761,-17.34597 25.692397,-25.96491 42.720527,-20.01169 19.10297,6.67862 28.56734,28.52564 21.87633,47.31556 -7.42828,20.86038 -31.35925,31.17077 -51.91059,23.74099"
+       transform="matrix(0.94939031,-0.31409878,0.31409878,0.94939031,91.37793,-41.615839)"
+       inkscape:export-filename="/home/gajop/.spring/games/AlienResources.sdd/LuaUI/Images/black-hole.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90" />
+    <path
+       sodipodi:type="spiral"
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.80000019;stroke-dasharray:39.99999995, 9.99999999, 4.99999999, 9.99999999;stroke-dashoffset:0;stroke-opacity:1;filter:url(#filter7397)"
+       id="path5478-6"
+       sodipodi:cx="124.29198"
+       sodipodi:cy="260.94958"
+       sodipodi:expansion="1"
+       sodipodi:revolution="3"
+       sodipodi:radius="42.078167"
+       sodipodi:argument="-16.878855"
+       sodipodi:t0="0"
+       d="m 124.29198,260.94958 c -0.82139,1.94328 -3.02473,-0.14846 -3.22985,-1.36519 -0.55584,-3.29725 3.12114,-5.35567 5.96023,-5.09449 5.07847,0.46719 7.85751,5.90416 6.95915,10.55527 -1.31838,6.82568 -8.71726,10.41221 -15.15031,8.82379 -8.57424,-2.11712 -12.98818,-11.54001 -10.68844,-19.74534 2.89398,-10.32557 14.36713,-15.57488 24.34038,-12.55309 12.07894,3.65979 18.16775,17.19665 14.41774,28.93541 -4.41926,13.83372 -20.02767,20.76448 -33.53045,16.28239 -15.589494,-5.17475 -23.363798,-22.85968 -18.147041,-38.12549 5.927611,-17.34597 25.692401,-25.96491 42.720521,-20.01169 19.10298,6.67862 28.56735,28.52564 21.87634,47.31556 -7.42829,20.86038 -31.35925,31.17077 -51.9106,23.74099"
+       transform="matrix(-0.55428888,-0.83232436,0.83232436,-0.55428888,148.96932,420.05914)"
+       inkscape:export-filename="/home/gajop/.spring/games/AlienResources.sdd/LuaUI/Images/black-hole.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90" />
+    <path
+       sodipodi:type="spiral"
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:4.46910858;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.80000019;stroke-dasharray:35.7528687, 8.93821718, 4.46910859, 8.93821718;stroke-dashoffset:0;stroke-opacity:1;filter:url(#filter7405)"
+       id="path5478-5"
+       sodipodi:cx="240.71429"
+       sodipodi:cy="240.21935"
+       sodipodi:expansion="1"
+       sodipodi:revolution="3"
+       sodipodi:radius="37.610382"
+       sodipodi:argument="-16.878855"
+       sodipodi:t0="0"
+       d="m 240.71429,240.21935 c -0.73417,1.73693 -2.70357,-0.13271 -2.8869,-1.22024 -0.49682,-2.94716 2.78974,-4.78702 5.32738,-4.55357 4.53925,0.41758 7.02321,5.27727 6.22024,9.43452 -1.1784,6.10095 -7.79167,9.30667 -13.54167,7.8869 -7.66385,-1.89232 -11.60912,-10.31471 -9.55357,-17.64881 2.58671,-9.22922 12.84166,-13.92117 21.75596,-11.22023 10.79642,3.2712 16.23873,15.37074 12.88689,25.8631 -3.95002,12.36489 -17.90116,18.55975 -29.97024,14.55356 -13.93423,-4.62531 -20.88307,-20.43249 -16.22022,-34.07739 5.29823,-15.50421 22.96443,-23.20801 38.18453,-17.88689 17.07466,5.9695 25.53412,25.49683 19.55355,42.29168 -6.63957,18.64546 -28.02958,27.86111 -46.39882,21.22021"
+       transform="matrix(0.43433878,1.0310402,-1.0310402,0.43433878,437.9271,-188.9637)"
+       inkscape:export-filename="/home/gajop/.spring/games/AlienResources.sdd/LuaUI/Images/black-hole.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90" />
+    <path
+       sodipodi:type="spiral"
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:4.46910858;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.80000019;stroke-dasharray:35.75287018, 8.93821754, 4.46910877, 8.93821754;stroke-dashoffset:0;stroke-opacity:1;filter:url(#filter7393)"
+       id="path5478-5-4-6"
+       sodipodi:cx="240.71429"
+       sodipodi:cy="240.21935"
+       sodipodi:expansion="1"
+       sodipodi:revolution="3"
+       sodipodi:radius="37.610382"
+       sodipodi:argument="-16.878855"
+       sodipodi:t0="0"
+       d="m 240.71429,240.21935 c -0.73417,1.73693 -2.70357,-0.13271 -2.8869,-1.22024 -0.49682,-2.94716 2.78974,-4.78702 5.32738,-4.55357 4.53925,0.41758 7.02321,5.27727 6.22024,9.43452 -1.1784,6.10095 -7.79167,9.30667 -13.54167,7.8869 -7.66385,-1.89232 -11.60912,-10.31471 -9.55357,-17.64881 2.58671,-9.22922 12.84166,-13.92117 21.75596,-11.22023 10.79642,3.2712 16.23873,15.37074 12.88689,25.8631 -3.95002,12.36489 -17.90116,18.55975 -29.97024,14.55356 -13.93423,-4.62531 -20.88307,-20.43249 -16.22022,-34.07739 5.29823,-15.50421 22.96443,-23.20801 38.18453,-17.88689 17.07466,5.9695 25.53412,25.49683 19.55355,42.29168 -6.63957,18.64546 -28.02958,27.86111 -46.39882,21.22021"
+       transform="matrix(-1.0139941,0.47276837,-0.47276837,-1.0139941,655.35182,294.24981)"
+       inkscape:export-filename="/home/gajop/.spring/games/AlienResources.sdd/LuaUI/Images/black-hole.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90" />
+    <path
+       sodipodi:type="spiral"
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:4.46910858;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.80000019;stroke-dasharray:35.75287018, 8.93821754, 4.46910877, 8.93821754;stroke-dashoffset:0;stroke-opacity:1;filter:url(#filter7401)"
+       id="path5478-5-4"
+       sodipodi:cx="240.71429"
+       sodipodi:cy="240.21935"
+       sodipodi:expansion="1"
+       sodipodi:revolution="3"
+       sodipodi:radius="37.610382"
+       sodipodi:argument="-16.878855"
+       sodipodi:t0="0"
+       d="m 240.71429,240.21935 c -0.73417,1.73693 -2.70357,-0.13271 -2.8869,-1.22024 -0.49682,-2.94716 2.78974,-4.78702 5.32738,-4.55357 4.53925,0.41758 7.02321,5.27727 6.22024,9.43452 -1.1784,6.10095 -7.79167,9.30667 -13.54167,7.8869 -7.66385,-1.89232 -11.60912,-10.31471 -9.55357,-17.64881 2.58671,-9.22922 12.84166,-13.92117 21.75596,-11.22023 10.79642,3.2712 16.23873,15.37074 12.88689,25.8631 -3.95002,12.36489 -17.90116,18.55975 -29.97024,14.55356 -13.93423,-4.62531 -20.88307,-20.43249 -16.22022,-34.07739 5.29823,-15.50421 22.96443,-23.20801 38.18453,-17.88689 17.07466,5.9695 25.53412,25.49683 19.55355,42.29168 -6.63957,18.64546 -28.02958,27.86111 -46.39882,21.22021"
+       transform="matrix(-1.0139941,0.47276837,-0.47276837,-1.0139941,656.24145,293.79445)"
+       inkscape:export-filename="/home/gajop/.spring/games/AlienResources.sdd/LuaUI/Images/black-hole.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90" />
+  </g>
+</svg>

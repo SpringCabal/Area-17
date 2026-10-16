@@ -8,7 +8,6 @@
 /Docs
 /doc
 /verification
-/port-reference
 /wasm-src
 /wasm-test
 /dist_cfg

@@ -8,6 +8,10 @@ local Civilian = Unit:New {
 	-- Movement
 	acceleration           = 0.5,
 	brakeRate              = 0.5,
+	-- Keep the original definition speed. The unit_attributes gadget changes
+	-- the live ground move type to 2 elmos/second, and the WASM rules do the
+	-- same through the typed MoveCtrl API. This definition value also provides
+	-- the command-speed ceiling needed when the flee multiplier is applied.
 	maxVelocity            = 40,
 	turnRate               = 3000,
 	footprintX             = 1,

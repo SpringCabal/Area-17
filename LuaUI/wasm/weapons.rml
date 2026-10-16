@@ -1,0 +1,1 @@
+<div class="weapon-slot" data-for="weapon : weapons" data-if="weapon.visible" data-attr-class="'weapon-slot ' + weapon.state" data-style-bottom="weapon.bottom"><span class="weapon-label">{{weapon.label}}</span></div>

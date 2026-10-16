@@ -1,0 +1,1 @@
+<div class="event-line" data-for="entry : events" data-if="entry.visible" data-style-top="entry.top" data-style-opacity="entry.opacity" data-style-color="entry.color">{{entry.text}}</div>

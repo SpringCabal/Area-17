@@ -1,0 +1,20 @@
+pub mod api_sync;
+#[cfg(feature = "e2e")]
+pub mod dbg_integration;
+pub mod gallery;
+pub mod gfx_volumes;
+pub mod gui_camera;
+pub mod gui_full_view;
+pub mod gui_rml;
+pub mod gui_ufo_control;
+pub mod setup;
+
+pub use api_sync::ApiSyncWidget;
+#[cfg(feature = "e2e")]
+pub use dbg_integration::DbgIntegrationWidget;
+pub use gfx_volumes::GfxVolumesWidget;
+pub use gui_camera::GuiCameraWidget;
+pub use gui_full_view::GuiFullViewWidget;
+pub use gui_rml::GuiRmlWidget;
+pub use gui_ufo_control::GuiUfoControlWidget;
+pub use setup::setup;

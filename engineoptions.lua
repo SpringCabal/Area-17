@@ -45,7 +45,7 @@ local options =
     name   = "Ghosted buildings",
     desc   = "Once an enemy building will be spotted\n a ghost trail will be placed to memorize location even after the loss of the line of sight (key = 'GhostedBuildings')",
     type   = "bool",
-    def    = true,
+    def    = false,
   },
 
   {

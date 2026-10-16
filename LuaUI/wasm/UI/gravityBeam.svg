@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 744.09448819 1052.3622047"
+   id="svg7598"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="gravityBeam.svg">
+  <defs
+     id="defs7600">
+    <linearGradient
+       id="linearGradient9673"
+       osb:paint="solid">
+      <stop
+         style="stop-color:#ff0000;stop-opacity:1;"
+         offset="0"
+         id="stop9675" />
+    </linearGradient>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter4920"
+       x="-0.050231419"
+       width="1.1004628"
+       y="-0.022258907"
+       height="1.0445178">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="0.58826266"
+         id="feGaussianBlur4922" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter4970"
+       x="-0.094615598"
+       width="1.1892312"
+       y="-0.12579508"
+       height="1.2515902">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="1.0443511"
+         id="feGaussianBlur4972" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter5078"
+       x="-0.064740962"
+       width="1.1294819"
+       y="-0.042358378"
+       height="1.0847168">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="0.2119495"
+         id="feGaussianBlur5080" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter5082"
+       x="-0.46760013"
+       width="1.9352003"
+       y="-0.10249897"
+       height="1.2049979">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="0.2119495"
+         id="feGaussianBlur5084" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter5086"
+       x="-0.1017083"
+       width="1.2034166"
+       y="-0.56906197"
+       height="2.1381239">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="0.2119495"
+         id="feGaussianBlur5088" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter5122"
+       x="-0.19361079"
+       width="1.3872216"
+       y="-0.061326097"
+       height="1.1226522">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="1.6705489"
+         id="feGaussianBlur5124" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="5.6"
+     inkscape:cx="155.13204"
+     inkscape:cy="621.6107"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1024"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata7603">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="opacity:0.52300002;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:4.40500927;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter5122)"
+       d="m 186.75196,424.80494 c -20.70813,65.65991 -20.70813,65.65991 -20.70813,65.65991"
+       id="path9715"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/gajop/.spring/games/AlienResources.sdd/LuaUI/Images/incendiary.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90"
+       transform="matrix(1.5735534,-0.06704754,0,1.0395816,-108.04313,-28.072577)" />
+    <path
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:2.898;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter4920)"
+       d="m 136.73828,404.03125 31.32227,64.94922 -31.32227,-64.94922 z"
+       id="path9715-3"
+       inkscape:connector-curvature="0"
+       transform="matrix(-1,0.05172082,0,1,322.11301,-8.3299743)" />
+    <rect
+       style="opacity:1;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#4e878b;stroke-width:1.82500005;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;filter:url(#filter4970)"
+       id="rect4928"
+       width="26.490797"
+       height="19.924807"
+       x="163.13269"
+       y="464.99643"
+       transform="matrix(-1,0.05172082,0,1,322.11301,-8.3299743)" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.2379688px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;filter:url(#filter5086)"
+       d="m 165.35443,440.01356 c 5.00135,0.89389 5.00135,0.89389 5.00135,0.89389"
+       id="path4978"
+       inkscape:connector-curvature="0"
+       transform="matrix(-2.2206213,0.11485235,0,2.2206213,524.27377,-574.44974)" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.2379688px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;filter:url(#filter5082)"
+       d="m 165.90107,439.56832 c -1.08785,4.96277 -1.08785,4.96277 -1.08785,4.96277"
+       id="path4978-8"
+       inkscape:connector-curvature="0"
+       transform="matrix(-2.2206213,0.11485235,0,2.2206213,524.27377,-574.44974)" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;filter:url(#filter5078)"
+       d="m 165.625,440.08542 c 7.85714,12.00893 7.85714,12.00893 7.85714,12.00893"
+       id="path5004"
+       inkscape:connector-curvature="0"
+       transform="matrix(-2.2206213,0.11485235,0,2.2206213,524.27377,-574.44974)" />
+  </g>
+</svg>

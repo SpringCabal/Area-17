@@ -1,0 +1,3 @@
+# The RmlUi HUD and all local input/camera handling live in their own UI
+# environment, separate from both rules instances.
+module(area17-ui, LuaUI/wasm/area17-ui.wasm, ui, 0, 1.0.0)

@@ -1,0 +1,7 @@
+<div class="ability" data-for="ability : abilities" data-if="ability.visible" data-style-bottom="ability.bottom">
+  <div class="ability-label">{{ability.label}}</div>
+  <div class="ability-track" data-attr-class="'ability-track ' + ability.state">
+    <div class="ability-fill" data-style-width="ability.progress"></div>
+    <div class="ability-caption">{{ability.caption}}</div>
+  </div>
+</div>

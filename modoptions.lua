@@ -24,6 +24,20 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 local options = {
+	{
+		key = "test_mode",
+		name = "Headless integration tests",
+		desc = "Runs the Area 17 automated integration scenario.",
+		type = "bool",
+		def = false,
+	},
+	{
+		key = "visual_test",
+		name = "Off-screen visual smoke test",
+		desc = "Captures Area 17 screenshots for the Xvfb verification runner.",
+		type = "bool",
+		def = false,
+	},
 }
 
 return options
