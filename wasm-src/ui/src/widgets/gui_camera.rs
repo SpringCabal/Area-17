@@ -38,8 +38,9 @@ impl Widget<Global> for GuiCameraWidget {
         "GuiCamera"
     }
 
-    fn update(&self, ctx: &spring_addons::AddonContext<'_, Global>, dt: f32) {
+    fn update(&self, ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>, dt: f32) {
         let ufo_id = ctx.global().simulation.access().ufo_id;
-        self.camera.update((ufo_id >= 0).then_some(ufo_id), dt);
+        self.camera
+            .update(ctx.spring(), (ufo_id >= 0).then_some(ufo_id), dt);
     }
 }

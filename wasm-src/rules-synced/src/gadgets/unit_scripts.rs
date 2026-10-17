@@ -1,3 +1,4 @@
+use spring::ResultExt;
 use spring_addons::rules::Gadget;
 
 use crate::cus_scripts;
@@ -18,11 +19,17 @@ impl Gadget<Global> for UnitScriptsGadget {
     }
 
     fn init(&self, _ctx: &spring_addons::AddonContext<'_, Global>) {
-        crate::with_cus_module_or_defer(|host| host.attach_existing());
+        let _spring = _ctx.spring();
+        crate::with_cus_module(|host, spring| host.attach_existing(spring))
+            .log_err_once(_ctx.spring(), "attaching existing Area 17 unit scripts");
     }
 
     fn game_frame(&self, _ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
-        crate::with_cus_module_or_defer(move |host| host.game_frame(frame));
+        crate::with_cus_module(move |host, _| {
+            host.game_frame(frame);
+            Ok(())
+        })
+        .log_err_once(_ctx.spring(), "running Area 17 unit scripts");
     }
 
     fn unit_created(
@@ -33,6 +40,6 @@ impl Gadget<Global> for UnitScriptsGadget {
         _team: i32,
         _builder: i32,
     ) {
-        cus_scripts::attach_script(unit, def);
+        cus_scripts::attach_script(_ctx.spring(), unit, def);
     }
 }

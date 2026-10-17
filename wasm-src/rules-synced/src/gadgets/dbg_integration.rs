@@ -19,7 +19,8 @@ impl Gadget<Global> for DbgIntegrationGadget {
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
-        with_test(|test| integration::update(test, ctx.global(), frame));
+        let spring = ctx.spring();
+        with_test(|test| integration::update(spring, test, ctx.global(), frame));
     }
 
     fn projectile_created(
@@ -40,7 +41,8 @@ impl Gadget<Global> for DbgIntegrationGadget {
         _team: i32,
         _builder: i32,
     ) {
-        with_test(|test| test.unit_created(unit, def));
+        let spring = _ctx.spring();
+        with_test(|test| test.unit_created(spring, unit, def));
     }
 
     fn unit_pre_damaged(
@@ -48,7 +50,8 @@ impl Gadget<Global> for DbgIntegrationGadget {
         _ctx: &spring_addons::AddonContext<'_, Global>,
         event: &spring_addons::rules::UnitPreDamagedEvent,
     ) -> Option<spring::DamageResult> {
-        with_test(|test| test.pre_damaged(event.unit_id, event.weapon_def_id));
+        let spring = _ctx.spring();
+        with_test(|test| test.pre_damaged(spring, event.unit_id, event.weapon_def_id));
         None
     }
 
@@ -60,8 +63,10 @@ impl Gadget<Global> for DbgIntegrationGadget {
         _owner_id: i32,
         _projectile_id: i32,
     ) -> bool {
+        let spring = _ctx.spring();
         with_test(|test| {
             test.explosion(
+                spring,
                 weapon_def_id,
                 Float3 {
                     x: pos.0,

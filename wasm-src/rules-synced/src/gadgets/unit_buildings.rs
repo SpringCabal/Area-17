@@ -5,9 +5,9 @@ use crate::definitions;
 use crate::defs::{self, UnitKind};
 use crate::state::Global;
 
-fn is_explosive(unit_def_id: i32) -> bool {
+fn is_explosive(spring: &spring::Spring<'_, spring::RulesSynced>, unit_def_id: i32) -> bool {
     matches!(
-        defs::kind(unit_def_id),
+        defs::kind(spring, unit_def_id),
         Some(
             UnitKind::Building1
                 | UnitKind::Building2
@@ -41,19 +41,22 @@ impl Gadget<Global> for UnitBuildingsGadget {
         _ctx: &spring_addons::AddonContext<'_, Global>,
         event: &UnitDestroyedEvent,
     ) {
-        if !is_explosive(event.unit_def_id) {
+        let spring = _ctx.spring();
+        if !is_explosive(spring, event.unit_def_id) {
             return;
         }
-        let Some(position) = definitions::unit_position(event.unit_id) else {
+        let Some(position) = definitions::unit_position(spring, event.unit_id) else {
             return;
         };
-        spring::sound::play_sound_file(
-            "sounds/explosion.wav",
-            2.0,
-            position,
-            spring::Float3::default(),
-            0,
-        )
-        .log_err_once("Area 17 building explosion: play sound file");
+        spring
+            .sound()
+            .play_sound_file(
+                "sounds/explosion.wav",
+                2.0,
+                position,
+                spring::Float3::default(),
+                0,
+            )
+            .log_err_once(spring, "Area 17 building explosion: play sound file");
     }
 }

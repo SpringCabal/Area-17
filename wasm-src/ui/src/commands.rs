@@ -18,34 +18,43 @@ pub fn fire_order(global: &Global, target: Float3) -> Option<Float3> {
     (!current_weapon.is_some_and(|index| WEAPONS[index].is_beam)).then_some(target)
 }
 
-pub fn fire(order: Option<Float3>) {
+pub fn fire(spring: &spring::Spring<'_, spring::Ui>, order: Option<Float3>) {
     let message = Encoder::new(msg::FIRE);
-    send_to_rules(&match order {
-        None => message.finish(),
-        Some(target) => with_point(message, target),
-    });
+    send_to_rules(
+        spring,
+        &match order {
+            None => message.finish(),
+            Some(target) => with_point(message, target),
+        },
+    );
 }
 
-pub fn cease_fire() {
-    send_to_rules(msg::CEASE_FIRE);
+pub fn cease_fire(spring: &spring::Spring<'_, spring::Ui>) {
+    send_to_rules(spring, msg::CEASE_FIRE);
 }
 
-pub fn select_weapon(global: &Global, index: usize) {
+pub fn select_weapon(spring: &spring::Spring<'_, spring::Ui>, global: &Global, index: usize) {
     let name = WEAPONS[index].name();
     let enabled = find_tech_index(name).is_some_and(|tech| {
         let tech = global.simulation.access().tech[tech];
         tech.enabled && tech.unlocked
     });
     if !enabled {
-        diagnostics::debug("weapon selection ignored because technology is locked");
+        diagnostics::debug(
+            spring,
+            "weapon selection ignored because technology is locked",
+        );
         return;
     }
     global.simulation.access_mut().current_weapon = Some(index);
-    send_to_rules(&Encoder::new(msg::CHANGE_WEAPON).field(name).finish());
-    audio::play_ui("sounds/select.wav");
+    send_to_rules(
+        spring,
+        &Encoder::new(msg::CHANGE_WEAPON).field(name).finish(),
+    );
+    audio::play_ui(spring, "sounds/select.wav");
 }
 
-pub fn activate_tech(global: &Global, index: usize) {
+pub fn activate_tech(spring: &spring::Spring<'_, spring::Ui>, global: &Global, index: usize) {
     let Some(name) = area17_shared::TechId::ALL
         .get(index)
         .map(|tech| tech.name())
@@ -59,32 +68,32 @@ pub fn activate_tech(global: &Global, index: usize) {
     let tech = simulation.tech[index];
     drop(simulation);
     if tech.unlocked {
-        send_to_rules(&Encoder::new(msg::UPGRADE).field(name).finish());
-        audio::play_ui("sounds/click.wav");
+        send_to_rules(spring, &Encoder::new(msg::UPGRADE).field(name).finish());
+        audio::play_ui(spring, "sounds/click.wav");
     } else {
-        send_to_rules(&Encoder::new(msg::UNLOCK).field(name).finish());
-        audio::play_ui("sounds/select.wav");
+        send_to_rules(spring, &Encoder::new(msg::UNLOCK).field(name).finish());
+        audio::play_ui(spring, "sounds/select.wav");
     }
 }
 
-pub fn toggle_upgrade_panel(global: &Global) {
+pub fn toggle_upgrade_panel(spring: &spring::Spring<'_, spring::Ui>, global: &Global) {
     #[cfg(feature = "diagnostics")]
-    diagnostics::info("Area 17 RmlUi callback: technology toggle");
+    diagnostics::info(spring, "Area 17 RmlUi callback: technology toggle");
     let mut panel = global.panel.access_mut();
     panel.upgrade_panel_open = !panel.upgrade_panel_open;
-    audio::play_ui("sounds/click.wav");
+    audio::play_ui(spring, "sounds/click.wav");
 }
 
-pub fn close_upgrade_panel(global: &Global) {
+pub fn close_upgrade_panel(spring: &spring::Spring<'_, spring::Ui>, global: &Global) {
     #[cfg(feature = "diagnostics")]
-    diagnostics::info("Area 17 RmlUi callback: technology close");
+    diagnostics::info(spring, "Area 17 RmlUi callback: technology close");
     global.panel.access_mut().upgrade_panel_open = false;
-    audio::play_ui("sounds/click.wav");
+    audio::play_ui(spring, "sounds/click.wav");
 }
 
 #[cfg(feature = "e2e")]
-pub fn grant_test_resources() {
-    diagnostics::info("Area 17 e2e: test resources requested");
-    send_to_rules("cheatResources");
-    audio::play_ui("sounds/select.wav");
+pub fn grant_test_resources(spring: &spring::Spring<'_, spring::Ui>) {
+    diagnostics::info(spring, "Area 17 e2e: test resources requested");
+    send_to_rules(spring, "cheatResources");
+    audio::play_ui(spring, "sounds/select.wav");
 }

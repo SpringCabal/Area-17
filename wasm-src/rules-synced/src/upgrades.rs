@@ -5,16 +5,20 @@ use state::{Ability, BeamState, Economy, Global, Tech, TechId};
 const BASE_SHIELD_REGEN: f32 = 1.5;
 const MAX_SHIELD_POWER: f32 = 1_000.0;
 
-pub fn update(global: &Global) {
+pub fn update(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global) {
     if global.ufo.access().id < 0 {
         return;
     }
-    apply_effects(global);
-    update_shield(global);
-    update_ability_timers(global);
+    apply_effects(spring, global);
+    update_shield(spring, global);
+    update_ability_timers(spring, global);
 }
 
-pub fn unlock(global: &Global, tech_id: TechId) -> bool {
+pub fn unlock(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    global: &Global,
+    tech_id: TechId,
+) -> bool {
     {
         let mut tech = global.tech.access_mut();
         if !can_unlock(&tech, &global.economy.access(), tech_id) {
@@ -24,12 +28,16 @@ pub fn unlock(global: &Global, tech_id: TechId) -> bool {
         state::tech_mut(&mut tech, tech_id).unlocked = true;
         refresh_enabled(&mut tech);
     }
-    apply_effects(global);
-    diagnostics::info("Area 17 technology unlocked");
+    apply_effects(spring, global);
+    diagnostics::info(spring, "Area 17 technology unlocked");
     true
 }
 
-pub fn upgrade(global: &Global, tech_id: TechId) -> bool {
+pub fn upgrade(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    global: &Global,
+    tech_id: TechId,
+) -> bool {
     {
         let mut tech = global.tech.access_mut();
         if !can_upgrade(&tech, &global.economy.access(), tech_id) {
@@ -38,7 +46,7 @@ pub fn upgrade(global: &Global, tech_id: TechId) -> bool {
         global.economy.access_mut().biomass -= upgrade_cost(&tech, tech_id);
         state::tech_mut(&mut tech, tech_id).level += 1;
     }
-    apply_effects(global);
+    apply_effects(spring, global);
     true
 }
 
@@ -67,7 +75,11 @@ pub fn gravity_impulse_multiplier(tech: &Tech) -> f32 {
     1.0 + tech_value(tech, TechId::GravityBeam) / 100.0
 }
 
-pub fn activate_ability(global: &Global, ability: Ability) {
+pub fn activate_ability(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    global: &Global,
+    ability: Ability,
+) {
     let tech_id = ability.tech();
     let ufo_id = global.ufo.access().id;
     let index = ability.index();
@@ -84,25 +96,27 @@ pub fn activate_ability(global: &Global, ability: Ability) {
     let multiplier = tech_id.value(level) / 100.0;
     match ability {
         Ability::Haste => {
-            set_ufo_multiplier(ufo_id, 1.6 * (1.0 + multiplier));
-            play_sound(ufo_id, "sounds/haste.wav", 40.0);
+            set_ufo_multiplier(spring, ufo_id, 1.6 * (1.0 + multiplier));
+            play_sound(spring, ufo_id, "sounds/haste.wav", 40.0);
         }
         Ability::Cloak => {
-            spring::set_unit_cloak(
-                ufo_id,
-                spring::types::NumberOrBool {
-                    number: 4.0,
-                    boolean: false,
-                    use_boolean: false,
-                },
-                spring::types::NumberOrBool::default(),
-            )
-            .log_err_once("Area 17 upgrades: set unit cloak");
-            play_sound(ufo_id, "sounds/cloak.wav", 40.0);
+            spring
+                .unit_control()
+                .set_unit_cloak(
+                    ufo_id,
+                    spring::unit_control::NumberOrBool {
+                        number: 4.0,
+                        boolean: false,
+                        use_boolean: false,
+                    },
+                    spring::unit_control::NumberOrBool::default(),
+                )
+                .log_err_once(spring, "Area 17 upgrades: set unit cloak");
+            play_sound(spring, ufo_id, "sounds/cloak.wav", 40.0);
         }
         Ability::Teleport => {
-            teleport(ufo_id, 800.0 * (1.0 + multiplier));
-            play_sound(ufo_id, "sounds/teleport.wav", 40.0);
+            teleport(spring, ufo_id, 800.0 * (1.0 + multiplier));
+            play_sound(spring, ufo_id, "sounds/teleport.wav", 40.0);
         }
         Ability::IndependenceDayGun => {
             global.tech.access_mut().beam = BeamState::GodGun;
@@ -140,7 +154,7 @@ fn refresh_enabled(tech: &mut Tech) {
     }
 }
 
-fn apply_effects(global: &Global) {
+fn apply_effects(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global) {
     let ufo_id = global.ufo.access().id;
     if ufo_id < 0 {
         return;
@@ -157,28 +171,33 @@ fn apply_effects(global: &Global) {
         )
     };
 
-    if let Some(base_health) = definitions::unit_def_id(ufo_id)
-        .and_then(defs::unit_data)
+    if let Some(base_health) = definitions::unit_def_id(spring, ufo_id)
+        .and_then(|id| defs::unit_data(spring, id))
         .map(|physics| physics.health)
     {
-        let health_ratio = match definitions::unit_health(ufo_id) {
+        let health_ratio = match definitions::unit_health(spring, ufo_id) {
             Some((health, max_health)) if max_health > 0.0 => (health / max_health).clamp(0.0, 1.0),
             _ => 1.0,
         };
         let max_health = base_health * armor_multiplier;
-        spring::set_unit_max_health(ufo_id, max_health)
-            .log_err_once("Area 17 upgrades: set unit max health");
-        let _ = definitions::set_health(ufo_id, max_health * health_ratio);
+        spring
+            .unit_control()
+            .set_unit_max_health(ufo_id, max_health)
+            .log_err_once(spring, "Area 17 upgrades: set unit max health");
+        let _ = definitions::set_health(spring, ufo_id, max_health * health_ratio);
     }
-    spring::set_unit_rules_param_f32(
-        ufo_id,
-        "PDisUnlocked",
-        if point_defense { 1.0 } else { 0.0 },
-        0,
-    )
-    .log_err_once("Area 17 upgrades: set unit rules param f32");
-    if !weapon_multishot::apply(global) {
+    spring
+        .rules_params()
+        .set_unit_rules_param_f32(
+            ufo_id,
+            "PDisUnlocked",
+            if point_defense { 1.0 } else { 0.0 },
+            0,
+        )
+        .log_err_once(spring, "Area 17 upgrades: set unit rules param f32");
+    if !weapon_multishot::apply(spring, global) {
         spring::log_warning!(
+            spring,
             crate::diagnostics::SECTION,
             "Area 17 engine rejected the upgraded Pulse Laser or Point Defense"
         );
@@ -193,7 +212,7 @@ fn apply_effects(global: &Global) {
     tech.effects_applied = true;
 }
 
-fn update_shield(global: &Global) {
+fn update_shield(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global) {
     let ufo_id = global.ufo.access().id;
     let (enabled, shield_multiplier, stored_power) = {
         let tech = global.tech.access();
@@ -205,22 +224,28 @@ fn update_shield(global: &Global) {
     };
     if !enabled {
         global.tech.access_mut().shield_power = 0.0;
-        spring::set_unit_shield_state(ufo_id, -1, false, 0.0)
-            .log_err_once("Area 17 upgrades: set unit shield state");
+        spring
+            .unit_control()
+            .set_unit_shield_state(ufo_id, -1, false, 0.0)
+            .log_err_once(spring, "Area 17 upgrades: set unit shield state");
         return;
     }
-    let live_power = spring::units_info::get_unit_shield_state(ufo_id, -1)
+    let live_power = spring
+        .units_info()
+        .get_unit_shield_state(ufo_id, -1)
         .ok()
         .flatten()
         .map(|shield| shield.shield_power)
         .unwrap_or(stored_power);
     let shield_power = (live_power + BASE_SHIELD_REGEN * shield_multiplier).min(MAX_SHIELD_POWER);
     global.tech.access_mut().shield_power = shield_power;
-    spring::set_unit_shield_state(ufo_id, -1, true, shield_power)
-        .log_err_once("Area 17 upgrades: set unit shield state");
+    spring
+        .unit_control()
+        .set_unit_shield_state(ufo_id, -1, true, shield_power)
+        .log_err_once(spring, "Area 17 upgrades: set unit shield state");
 }
 
-fn update_ability_timers(global: &Global) {
+fn update_ability_timers(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global) {
     for ability in Ability::ALL {
         let index = ability.index();
         let expiring = {
@@ -229,24 +254,30 @@ fn update_ability_timers(global: &Global) {
             tech.ability_durations[index] == 1
         };
         if expiring {
-            disable_ability(global, ability);
+            disable_ability(spring, global, ability);
         }
         let mut tech = global.tech.access_mut();
         tech.ability_durations[index] = tech.ability_durations[index].saturating_sub(1).max(0);
     }
 }
 
-fn disable_ability(global: &Global, ability: Ability) {
+fn disable_ability(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    global: &Global,
+    ability: Ability,
+) {
     let ufo_id = global.ufo.access().id;
     match ability {
-        Ability::Haste => set_ufo_multiplier(ufo_id, 1.0),
+        Ability::Haste => set_ufo_multiplier(spring, ufo_id, 1.0),
         Ability::Cloak => {
-            spring::set_unit_cloak(
-                ufo_id,
-                spring::types::NumberOrBool::default(),
-                spring::types::NumberOrBool::default(),
-            )
-            .log_err_once("Area 17 upgrades: set unit cloak");
+            spring
+                .unit_control()
+                .set_unit_cloak(
+                    ufo_id,
+                    spring::unit_control::NumberOrBool::default(),
+                    spring::unit_control::NumberOrBool::default(),
+                )
+                .log_err_once(spring, "Area 17 upgrades: set unit cloak");
         }
         Ability::Teleport => {}
         Ability::IndependenceDayGun => {
@@ -255,29 +286,37 @@ fn disable_ability(global: &Global, ability: Ability) {
     }
 }
 
-fn set_ufo_multiplier(ufo_id: i32, multiplier: f32) {
-    definitions::set_gunship_attributes(ufo_id, multiplier, multiplier * multiplier);
-    spring::set_unit_rules_param_f32(
-        ufo_id,
-        "selfMoveSpeedChange",
-        multiplier,
-        spring::rules_params::los::PUBLIC,
-    )
-    .log_err_once("Area 17 upgrades: set unit rules param f32");
-    spring::set_unit_rules_param_f32(
-        ufo_id,
-        "selfMaxAccelerationChange",
-        multiplier,
-        spring::rules_params::los::PUBLIC,
-    )
-    .log_err_once("Area 17 upgrades: set unit rules param f32");
+fn set_ufo_multiplier(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    ufo_id: i32,
+    multiplier: f32,
+) {
+    definitions::set_gunship_attributes(spring, ufo_id, multiplier, multiplier * multiplier);
+    spring
+        .rules_params()
+        .set_unit_rules_param_f32(
+            ufo_id,
+            "selfMoveSpeedChange",
+            multiplier,
+            spring::rules_params::los::PUBLIC,
+        )
+        .log_err_once(spring, "Area 17 upgrades: set unit rules param f32");
+    spring
+        .rules_params()
+        .set_unit_rules_param_f32(
+            ufo_id,
+            "selfMaxAccelerationChange",
+            multiplier,
+            spring::rules_params::los::PUBLIC,
+        )
+        .log_err_once(spring, "Area 17 upgrades: set unit rules param f32");
 }
 
-fn teleport(ufo_id: i32, distance: f32) {
-    let Some(position) = definitions::unit_position(ufo_id) else {
+fn teleport(spring: &spring::Spring<'_, spring::RulesSynced>, ufo_id: i32, distance: f32) {
+    let Some(position) = definitions::unit_position(spring, ufo_id) else {
         return;
     };
-    let Some(velocity) = definitions::unit_velocity(ufo_id) else {
+    let Some(velocity) = definitions::unit_velocity(spring, ufo_id) else {
         return;
     };
     let length = (velocity.x * velocity.x + velocity.z * velocity.z).sqrt();
@@ -285,14 +324,19 @@ fn teleport(ufo_id: i32, distance: f32) {
         return;
     }
     let Some((x, z)) = definitions::clamp_xz(
+        spring,
         position.x + velocity.x / length * distance,
         position.z + velocity.z / length * distance,
     ) else {
         return;
     };
-    let old_ground = spring::get_ground_height(position.x, position.z).unwrap_or(0.0);
-    let new_ground = spring::get_ground_height(x, z).unwrap_or(0.0);
+    let old_ground = spring
+        .terrain()
+        .get_ground_height(position.x, position.z)
+        .unwrap_or(0.0);
+    let new_ground = spring.terrain().get_ground_height(x, z).unwrap_or(0.0);
     let _ = definitions::set_position(
+        spring,
         ufo_id,
         spring::Float3 {
             x,
@@ -302,10 +346,17 @@ fn teleport(ufo_id: i32, distance: f32) {
     );
 }
 
-fn play_sound(ufo_id: i32, file: &str, volume: f32) {
-    let position = definitions::unit_position(ufo_id).unwrap_or_default();
-    spring::sound::play_sound_file(file, volume, position, spring::Float3::default(), 0)
-        .log_err_once("Area 17 upgrades: play sound file");
+fn play_sound(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    ufo_id: i32,
+    file: &str,
+    volume: f32,
+) {
+    let position = definitions::unit_position(spring, ufo_id).unwrap_or_default();
+    spring
+        .sound()
+        .play_sound_file(file, volume, position, spring::Float3::default(), 0)
+        .log_err_once(spring, "Area 17 upgrades: play sound file");
 }
 
 fn can_unlock(tech: &Tech, economy: &Economy, tech_id: TechId) -> bool {

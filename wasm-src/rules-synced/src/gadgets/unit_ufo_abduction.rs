@@ -23,11 +23,12 @@ impl Gadget<Global> for UnitUfoAbductionGadget {
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, _frame: i32) {
+        let spring = ctx.spring();
         let gravity = self.gravity_per_frame.get().unwrap_or_else(|| {
-            let gravity = definitions::gravity_per_frame();
+            let gravity = definitions::gravity_per_frame(spring);
             self.gravity_per_frame.set(Some(gravity));
             gravity
         });
-        abduction::update(ctx.global(), gravity);
+        abduction::update(spring, ctx.global(), gravity);
     }
 }

@@ -29,26 +29,32 @@ impl Gadget<Global> for ApiStatusGadget {
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
+        let spring = ctx.spring();
         let global = ctx.global();
         let ufo_id = global.ufo.access().id;
         if let Some(position) = (ufo_id >= 0)
-            .then(|| definitions::unit_position(ufo_id))
+            .then(|| definitions::unit_position(spring, ufo_id))
             .flatten()
         {
-            publish_control(global, position);
+            publish_control(spring, global, position);
         }
         if frame.rem_euclid(STATUS_PERIOD) != 0 {
             return;
         }
         self.status
-            .send_if_changed(status(global), |status| send_to_ui(status));
+            .send_if_changed(status(spring, global), |status| send_to_ui(spring, status));
     }
 }
 
-fn publish_control(global: &Global, position: Float3) {
+fn publish_control(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    global: &Global,
+    position: Float3,
+) {
     let ufo = global.ufo.access();
     let beam = global.tech.access().beam;
     script_bridge::set_ufo_control(
+        spring,
         ufo.id,
         UfoControl {
             aim: position + ufo.aim,
@@ -58,13 +64,13 @@ fn publish_control(global: &Global, position: Float3) {
     );
 }
 
-fn status(global: &Global) -> String {
+fn status(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global) -> String {
     let (ufo_id, current_weapon) = {
         let ufo = global.ufo.access();
         (ufo.id, ufo.current_weapon)
     };
     let (health, max_health) = (ufo_id >= 0)
-        .then(|| definitions::unit_health(ufo_id))
+        .then(|| definitions::unit_health(spring, ufo_id))
         .flatten()
         .filter(|(_, max_health)| *max_health > 0.0)
         .unwrap_or((0.0, 1.0));

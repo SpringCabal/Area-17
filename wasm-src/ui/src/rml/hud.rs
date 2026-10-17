@@ -2,7 +2,7 @@ use alloc::format;
 use alloc::vec::Vec;
 
 use spring::ResultExt;
-use spring::owned::rml_ui::{RmlDataFieldDef, RmlDataValue};
+use spring::rml_ui::{RmlDataFieldDef, RmlDataValue};
 
 use super::dom::{health_color, shield_color};
 use super::loadout::{self, set_ability_panel, set_weapon_panel};
@@ -28,20 +28,30 @@ const EVENT_FIELDS: [(&str, u8); 4] = [
     ("opacity", FIELD_FLOAT),
 ];
 
-pub fn refresh_hud(hud: &mut Hud, simulation: &SimulationState, tech_open: bool) {
+pub fn refresh_hud(
+    spring: &spring::Spring<'_, spring::Ui>,
+    hud: &mut Hud,
+    simulation: &SimulationState,
+    tech_open: bool,
+) {
     if let Some(bindings) = hud.bindings {
-        let _ = spring::data_model_set_int(bindings.biomass, simulation.biomass.round() as i32);
-        let _ = spring::data_model_set_int(bindings.research, simulation.research.round() as i32);
-        set_health_bar(bindings, simulation);
-        set_endgame(bindings, simulation.game_over, simulation.game_won);
+        let _ = spring
+            .rml_ui()
+            .data_model_set_int(bindings.biomass, simulation.biomass.round() as i32);
+        let _ = spring
+            .rml_ui()
+            .data_model_set_int(bindings.research, simulation.research.round() as i32);
+        set_health_bar(spring, bindings, simulation);
+        set_endgame(spring, bindings, simulation.game_over, simulation.game_won);
     }
-    set_tech_toggle(hud, simulation);
-    set_weapon_panel(hud, simulation);
-    set_ability_panel(hud, simulation);
-    set_tech_panel(hud, simulation, tech_open);
+    set_tech_toggle(spring, hud, simulation);
+    set_weapon_panel(spring, hud, simulation);
+    set_ability_panel(spring, hud, simulation);
+    set_tech_panel(spring, hud, simulation, tech_open);
 }
 
 pub fn update_events(
+    spring: &spring::Spring<'_, spring::Ui>,
     hud: &mut Hud,
     simulation: &SimulationState,
     tech_open: bool,
@@ -54,7 +64,7 @@ pub fn update_events(
     hud.events
         .retain(|event| event.age_seconds < EVENT_EXPIRATION_SECONDS);
     if hud.tech_open != Some(tech_open) {
-        set_tech_panel(hud, simulation, tech_open);
+        set_tech_panel(spring, hud, simulation, tech_open);
     }
     let Some(bindings) = hud.bindings.filter(|_| had_events) else {
         return;
@@ -96,8 +106,10 @@ pub fn update_events(
             },
         ]);
     }
-    spring::data_model_set_rows(bindings.events, &values)
-        .log_err_once("updating Area 17 floating messages");
+    spring
+        .rml_ui()
+        .data_model_set_rows(bindings.events, &values)
+        .log_err_once(spring, "updating Area 17 floating messages");
 }
 
 pub fn add_event(hud: &mut Hud, text: &str, color: &'static str) {
@@ -111,50 +123,80 @@ pub fn add_event(hud: &mut Hud, text: &str, color: &'static str) {
     }
 }
 
-fn set_health_bar(bindings: Bindings, simulation: &SimulationState) {
+fn set_health_bar(
+    spring: &spring::Spring<'_, spring::Ui>,
+    bindings: Bindings,
+    simulation: &SimulationState,
+) {
     let health = simulation.health;
     let max_health = simulation.max_health;
     let shield = simulation.shield;
     let health_percent = (100.0 * health / max_health.max(1.0)).clamp(0.0, 100.0);
     let shield_percent = (100.0 * shield / MAX_SHIELD_CAPACITY).clamp(0.0, 100.0);
-    let _ = spring::data_model_set_percent(bindings.health, health_percent);
-    let _ = spring::data_model_set_percent(bindings.shield, shield_percent);
-    let _ = spring::data_model_set_string(bindings.health_color, &health_color(health_percent));
-    let _ = spring::data_model_set_string(bindings.shield_color, &shield_color(shield_percent));
-    let _ = spring::data_model_set_string(
+    let _ = spring
+        .rml_ui()
+        .data_model_set_percent(bindings.health, health_percent);
+    let _ = spring
+        .rml_ui()
+        .data_model_set_percent(bindings.shield, shield_percent);
+    let _ = spring
+        .rml_ui()
+        .data_model_set_string(bindings.health_color, &health_color(health_percent));
+    let _ = spring
+        .rml_ui()
+        .data_model_set_string(bindings.shield_color, &shield_color(shield_percent));
+    let _ = spring.rml_ui().data_model_set_string(
         bindings.health_caption,
         &format!("{:.0}/{:.0}", health.max(0.0), max_health),
     );
-    let _ = spring::data_model_set_string(
+    let _ = spring.rml_ui().data_model_set_string(
         bindings.shield_caption,
         &format!("{:.0}/{MAX_SHIELD_CAPACITY:.0}", shield.max(0.0)),
     );
 }
 
-fn set_endgame(bindings: Bindings, game_over: bool, game_won: bool) {
+fn set_endgame(
+    spring: &spring::Spring<'_, spring::Ui>,
+    bindings: Bindings,
+    game_over: bool,
+    game_won: bool,
+) {
     let title = if game_won {
         "THE QUEEN IS SAVED"
     } else {
         "THE UFO HAS BEEN DESTROYED"
     };
-    let _ = spring::data_model_set_bool(bindings.game_over, game_over);
-    let _ = spring::data_model_set_string(bindings.endgame_title, title);
+    let _ = spring
+        .rml_ui()
+        .data_model_set_bool(bindings.game_over, game_over);
+    let _ = spring
+        .rml_ui()
+        .data_model_set_string(bindings.endgame_title, title);
 }
 
-pub fn create_bindings(model: u64) -> Option<Bindings> {
+pub fn create_bindings(spring: &spring::Spring<'_, spring::Ui>, model: u64) -> Option<Bindings> {
     let bind_int = |name: &str| {
-        let binding = spring::data_model_bind_int(model, name, 0).ok()?;
+        let binding = spring.rml_ui().data_model_bind_int(model, name, 0).ok()?;
         (binding.success && binding.variable_handle != 0).then_some(binding.variable_handle)
     };
     let bind_percent = |name: &str| {
-        let binding = spring::data_model_bind_percent(model, name, 0.0).ok()?;
+        let binding = spring
+            .rml_ui()
+            .data_model_bind_percent(model, name, 0.0)
+            .ok()?;
         (binding.success && binding.variable_handle != 0).then_some(binding.variable_handle)
     };
     let bind_string = |name: &str, initial: &str| {
-        let binding = spring::data_model_bind_string(model, name, initial).ok()?;
+        let binding = spring
+            .rml_ui()
+            .data_model_bind_string(model, name, initial)
+            .ok()?;
         (binding.success && binding.variable_handle != 0).then_some(binding.variable_handle)
     };
-    let game_over = spring::data_model_bind_bool(model, "game_over", false).ok()?;
+    let game_over = spring
+        .rml_ui()
+        .data_model_bind_bool(model, "game_over", false)
+        .ok()?;
     if !game_over.success || game_over.variable_handle == 0 {
         return None;
     }
@@ -162,11 +204,14 @@ pub fn create_bindings(model: u64) -> Option<Bindings> {
         name: name.into(),
         type_,
     });
-    let events = spring::data_model_bind_rows(model, "events", &fields).ok()?;
+    let events = spring
+        .rml_ui()
+        .data_model_bind_rows(model, "events", &fields)
+        .ok()?;
     if !events.success || events.rows_handle == 0 {
         return None;
     }
-    let (weapons, abilities) = loadout::bind(model)?;
+    let (weapons, abilities) = loadout::bind(spring, model)?;
     Some(Bindings {
         biomass: bind_int("biomass")?,
         research: bind_int("research")?,
@@ -181,6 +226,6 @@ pub fn create_bindings(model: u64) -> Option<Bindings> {
         events: events.rows_handle,
         weapons,
         abilities,
-        tech: tech::bind(model)?,
+        tech: tech::bind(spring, model)?,
     })
 }

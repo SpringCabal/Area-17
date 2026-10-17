@@ -3,7 +3,7 @@ use core::cell::RefCell;
 use spring::ResultExt;
 
 use spring::cmd;
-use spring::commands;
+
 use spring_addons::rules::{Gadget, UnitDestroyedEvent};
 
 use crate::defs::{self, UnitKind};
@@ -38,16 +38,18 @@ impl Gadget<Global> for UnitUfoControllerGadget {
         _mode: i32,
         data: &[u8],
     ) {
+        let spring = ctx.spring();
         if let Ok(message) = core::str::from_utf8(data) {
-            ufo_controller::handle_message(ctx.global(), message);
+            ufo_controller::handle_message(spring, ctx.global(), message);
         }
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
+        let spring = ctx.spring();
         let global = ctx.global();
-        ufo_controller::apply_pending_input(global);
-        ufo_controller::update_destroyed_sequence(global, &self.alien, frame);
-        ufo_controller::update(global);
+        ufo_controller::apply_pending_input(spring, global);
+        ufo_controller::update_destroyed_sequence(spring, global, &self.alien, frame);
+        ufo_controller::update(spring, global);
     }
 
     fn unit_created(
@@ -58,20 +60,28 @@ impl Gadget<Global> for UnitUfoControllerGadget {
         _team: i32,
         _builder: i32,
     ) {
-        if defs::kind(def) != Some(UnitKind::Ufo) {
+        let spring = ctx.spring();
+        if defs::kind(spring, def) != Some(UnitKind::Ufo) {
             return;
         }
         ctx.global().ufo.access_mut().id = unit;
-        commands::give_order_to_unit(unit, cmd::IDLEMODE, &[0.0], 0, -1).then(|accepted| {
+        crate::with_addon_context(|ctx| {
+            ctx.commands()
+                .give_order_to_unit(unit, cmd::IDLEMODE, &[0.0], 0, -1)
+        })
+        .then(|spring, accepted| {
             if !accepted.unwrap_or(false) {
                 spring::log_warning!(
+                    spring,
                     crate::diagnostics::SECTION,
                     "Area 17 UFO rejected idle mode 0; it may land by itself"
                 );
             }
         });
-        spring::set_unit_rules_param_f32(unit, "selfMoveSpeedChange", 1.0, 0)
-            .log_err_once("Area 17 UFO controller: set unit rules param f32");
+        spring
+            .rules_params()
+            .set_unit_rules_param_f32(unit, "selfMoveSpeedChange", 1.0, 0)
+            .log_err_once(spring, "Area 17 UFO controller: set unit rules param f32");
     }
 
     fn unit_destroyed(
@@ -79,6 +89,7 @@ impl Gadget<Global> for UnitUfoControllerGadget {
         ctx: &spring_addons::AddonContext<'_, Global>,
         event: &UnitDestroyedEvent,
     ) {
+        let spring = ctx.spring();
         let unit_id = event.unit_id;
         {
             let mut alien = self.alien.borrow_mut();
@@ -91,8 +102,8 @@ impl Gadget<Global> for UnitUfoControllerGadget {
             return;
         }
 
-        let frame = spring::game::current_frame();
-        let destroyed_position = definitions::unit_position(unit_id);
+        let frame = spring.game().current_frame().unwrap_or(0);
+        let destroyed_position = definitions::unit_position(spring, unit_id);
         {
             let mut ufo = ctx.global().ufo.access_mut();
             ufo.id = -1;
@@ -108,8 +119,8 @@ impl Gadget<Global> for UnitUfoControllerGadget {
             tech.ability_durations.fill(0);
             tech.beam = BeamState::Idle;
         }
-        let [biomass, research, metal] = defs::unit_def(UnitKind::Alien)
-            .and_then(defs::unit_data)
+        let [biomass, research, metal] = defs::unit_def(spring, UnitKind::Alien)
+            .and_then(|id| defs::unit_data(spring, id))
             .map_or([0.0; 3], |data| data.capture_value);
         {
             let mut economy = ctx.global().economy.access_mut();
@@ -117,6 +128,6 @@ impl Gadget<Global> for UnitUfoControllerGadget {
             economy.research = (economy.research - research).max(0.0);
             economy.metal = (economy.metal - metal).max(0.0);
         }
-        diagnostics::info("Area 17 UFO destroyed; respawn scheduled");
+        diagnostics::info(spring, "Area 17 UFO destroyed; respawn scheduled");
     }
 }

@@ -27,11 +27,12 @@ impl Gadget<Global> for UnitSetupGadget {
         _team: i32,
         _builder: i32,
     ) {
-        definitions::make_visible(unit);
-        definitions::configure_unit_geometry(unit, def);
-        match defs::kind(def) {
+        let spring = _ctx.spring();
+        definitions::make_visible(spring, unit);
+        definitions::configure_unit_geometry(spring, unit, def);
+        match defs::kind(spring, def) {
             Some(UnitKind::Ufo | UnitKind::Drone) => {
-                definitions::set_gunship_attributes(unit, 1.0, 1.0);
+                definitions::set_gunship_attributes(spring, unit, 1.0, 1.0);
             }
             Some(
                 UnitKind::Tank
@@ -43,7 +44,7 @@ impl Gadget<Global> for UnitSetupGadget {
                 | UnitKind::Alien
                 | UnitKind::Endcube,
             ) => {
-                definitions::set_move_speed_multiplier(unit, 1.0);
+                definitions::set_move_speed_multiplier(spring, unit, 1.0);
             }
             _ => {}
         }
@@ -56,9 +57,12 @@ impl Gadget<Global> for UnitSetupGadget {
         owner_id: i32,
         _weapon_def_id: i32,
     ) {
-        if defs::unit_kind(owner_id).is_some_and(UnitKind::is_static_turret) {
-            spring::projectile_control::set_projectile_always_visible(projectile_id, true)
-                .log_err_once("Area 17 unit setup: set projectile always visible");
+        let spring = _ctx.spring();
+        if defs::unit_kind(spring, owner_id).is_some_and(UnitKind::is_static_turret) {
+            spring
+                .projectile_control()
+                .set_projectile_always_visible(projectile_id, true)
+                .log_err_once(spring, "Area 17 unit setup: set projectile always visible");
         }
     }
 }

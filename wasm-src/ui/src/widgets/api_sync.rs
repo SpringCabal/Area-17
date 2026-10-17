@@ -32,13 +32,19 @@ impl Widget<Global> for ApiSyncWidget {
         "ApiSync"
     }
 
-    fn recv_from_synced(&self, ctx: &spring_addons::AddonContext<'_, Global>, message: &[u8]) {
+    fn recv_from_synced(
+        &self,
+        ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>,
+        message: &[u8],
+    ) {
+        let spring = ctx.spring();
         let Ok(message) = core::str::from_utf8(message) else {
             return;
         };
         if let Some(fields) = message::key_values(message, msg::STATUS) {
             let tech_open = ctx.global().panel.access().upgrade_panel_open;
             Self::handle_status_message(
+                spring,
                 &mut ctx.global().simulation.access_mut(),
                 &mut ctx.global().hud.access_mut(),
                 tech_open,
@@ -50,6 +56,7 @@ impl Widget<Global> for ApiSyncWidget {
 
 impl ApiSyncWidget {
     fn handle_status_message<'a>(
+        spring: &spring::Spring<'_, spring::Ui>,
         simulation: &mut SimulationState,
         hud: &mut Hud,
         tech_open: bool,
@@ -83,9 +90,10 @@ impl ApiSyncWidget {
                 _ => {}
             }
         }
-        rml::refresh_hud(hud, simulation, tech_open);
+        rml::refresh_hud(spring, hud, simulation, tech_open);
         simulation.status_initialized = true;
         diagnostics::status(
+            spring,
             simulation.ufo_id,
             simulation.health,
             simulation.max_health,

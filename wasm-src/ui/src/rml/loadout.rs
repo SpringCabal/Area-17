@@ -27,14 +27,18 @@ const ABILITY_FIELDS: [(&str, u8); 5] = [
     ("caption", data::STRING),
 ];
 
-pub fn bind(model: u64) -> Option<(u64, u64)> {
+pub fn bind(spring: &spring::Spring<'_, spring::Ui>, model: u64) -> Option<(u64, u64)> {
     Some((
-        data::bind_rows(model, "weapons", &WEAPON_FIELDS)?,
-        data::bind_rows(model, "abilities", &ABILITY_FIELDS)?,
+        data::bind_rows(spring, model, "weapons", &WEAPON_FIELDS)?,
+        data::bind_rows(spring, model, "abilities", &ABILITY_FIELDS)?,
     ))
 }
 
-pub fn set_weapon_panel(hud: &Hud, simulation: &SimulationState) {
+pub fn set_weapon_panel(
+    spring: &spring::Spring<'_, spring::Ui>,
+    hud: &Hud,
+    simulation: &SimulationState,
+) {
     let Some(bindings) = hud.bindings else {
         return;
     };
@@ -56,11 +60,17 @@ pub fn set_weapon_panel(hud: &Hud, simulation: &SimulationState) {
             data::pixels((WEAPON_PANEL_BOTTOM_BASE - index as i32 * WEAPON_PANEL_SLOT_STEP) as f32),
         ]);
     }
-    spring::data_model_set_rows(bindings.weapons, &values)
-        .log_err_once("updating Area 17 weapon slots");
+    spring
+        .rml_ui()
+        .data_model_set_rows(bindings.weapons, &values)
+        .log_err_once(spring, "updating Area 17 weapon slots");
 }
 
-pub fn set_ability_panel(hud: &Hud, simulation: &SimulationState) {
+pub fn set_ability_panel(
+    spring: &spring::Spring<'_, spring::Ui>,
+    hud: &Hud,
+    simulation: &SimulationState,
+) {
     let Some(bindings) = hud.bindings else {
         return;
     };
@@ -98,8 +108,10 @@ pub fn set_ability_panel(hud: &Hud, simulation: &SimulationState) {
             data::text(&caption),
         ]);
     }
-    spring::data_model_set_rows(bindings.abilities, &values)
-        .log_err_once("updating Area 17 ability slots");
+    spring
+        .rml_ui()
+        .data_model_set_rows(bindings.abilities, &values)
+        .log_err_once(spring, "updating Area 17 ability slots");
 }
 
 fn progress_percent(value: i32, maximum: i32) -> f32 {

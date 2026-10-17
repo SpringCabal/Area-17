@@ -26,7 +26,11 @@ const AIM_STEP: f32 = 40.0;
 const ALIEN_DROP_HEIGHT: f32 = 100.0;
 const ALIEN_LAND_DELAY_FRAMES: i32 = 10;
 
-pub fn handle_message(global: &Global, message: &str) {
+pub fn handle_message(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    global: &Global,
+    message: &str,
+) {
     let command = message
         .split_once('|')
         .map_or(message, |(command, _)| command);
@@ -51,12 +55,12 @@ pub fn handle_message(global: &Global, message: &str) {
         msg::UNLOCK => queue_tech(&mut global.input.access_mut(), fields.next(), false),
         msg::UPGRADE => queue_tech(&mut global.input.access_mut(), fields.next(), true),
         #[cfg(feature = "e2e")]
-        "cheatResources" => grant_test_resources(global),
-        _ => diagnostics::debug("ignored unknown Area 17 input message"),
+        "cheatResources" => grant_test_resources(spring, global),
+        _ => diagnostics::debug(spring, "ignored unknown Area 17 input message"),
     }
 }
 
-pub fn apply_pending_input(global: &Global) {
+pub fn apply_pending_input(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global) {
     let inputs = core::mem::take(&mut global.input.access_mut().pending);
     for input in inputs {
         match input {
@@ -71,43 +75,43 @@ pub fn apply_pending_input(global: &Global) {
                 };
                 ufo.weapon_target = Some(target);
                 if ufo.id >= 0 {
-                    let point = target_position(&ufo, target);
-                    ufo.target_accepted = definitions::set_target(ufo.id, Some(point));
+                    let point = target_position(spring, &ufo, target);
+                    ufo.target_accepted = definitions::set_target(spring, ufo.id, Some(point));
                 }
             }
             PendingInput::CeaseFire => {
                 let mut ufo = global.ufo.access_mut();
                 ufo.weapon_target = None;
                 if ufo.id >= 0 {
-                    let _ = definitions::set_target(ufo.id, None);
+                    let _ = definitions::set_target(spring, ufo.id, None);
                 }
             }
-            PendingInput::Ability(ability) => upgrades::activate_ability(global, ability),
+            PendingInput::Ability(ability) => upgrades::activate_ability(spring, global, ability),
             PendingInput::ChangeWeapon(weapon) => {
                 global.ufo.access_mut().current_weapon = Some(weapon);
             }
             PendingInput::Unlock(tech) => {
-                let _ = upgrades::unlock(global, tech);
+                let _ = upgrades::unlock(spring, global, tech);
             }
             PendingInput::Upgrade(tech) => {
-                let _ = upgrades::upgrade(global, tech);
+                let _ = upgrades::upgrade(spring, global, tech);
             }
         }
     }
 }
 
-pub fn update(global: &Global) {
+pub fn update(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global) {
     let ufo_id = global.ufo.access().id;
     if ufo_id < 0 {
         return;
     }
-    let Some(position) = definitions::unit_position(ufo_id) else {
+    let Some(position) = definitions::unit_position(spring, ufo_id) else {
         return;
     };
 
     update_aim(&mut global.ufo.access_mut(), position);
-    update_movement(global, position);
-    update_weapon_target(global, position);
+    update_movement(spring, global, position);
+    update_weapon_target(spring, global, position);
 }
 
 pub struct Alien {
@@ -126,7 +130,12 @@ impl Default for Alien {
     }
 }
 
-pub fn update_destroyed_sequence(global: &Global, alien: &Rc<RefCell<Alien>>, frame: i32) {
+pub fn update_destroyed_sequence(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    global: &Global,
+    alien: &Rc<RefCell<Alien>>,
+    frame: i32,
+) {
     let spawn_at = {
         let mut alien = alien.borrow_mut();
         if alien
@@ -142,6 +151,7 @@ pub fn update_destroyed_sequence(global: &Global, alien: &Rc<RefCell<Alien>>, fr
     if let Some(position) = spawn_at {
         let alien = Rc::clone(alien);
         definitions::create_at_position(
+            spring,
             UnitKind::Alien,
             position.x,
             position.y + ALIEN_DROP_HEIGHT,
@@ -149,9 +159,10 @@ pub fn update_destroyed_sequence(global: &Global, alien: &Rc<RefCell<Alien>>, fr
             state::ENEMY_TEAM,
             0.0,
         )
-        .then(move |alien_id| {
+        .then(move |spring, alien_id| {
             let Some(alien_id) = alien_id else {
                 spring::log_warning!(
+                    spring,
                     crate::diagnostics::SECTION,
                     "Area 17 could not spawn the alien over the UFO wreck"
                 );
@@ -162,8 +173,8 @@ pub fn update_destroyed_sequence(global: &Global, alien: &Rc<RefCell<Alien>>, fr
                 alien.id = alien_id;
                 alien.land_frame = Some(frame + ALIEN_LAND_DELAY_FRAMES);
             }
-            script_bridge::abduction_float(alien_id);
-            diagnostics::info("Area 17 alien reveal spawned");
+            script_bridge::abduction_float(spring, alien_id);
+            diagnostics::info(spring, "Area 17 alien reveal spawned");
         });
     }
 
@@ -178,8 +189,8 @@ pub fn update_destroyed_sequence(global: &Global, alien: &Rc<RefCell<Alien>>, fr
         (due && alien.id >= 0).then_some(alien.id)
     };
     if let Some(alien_id) = landing {
-        script_bridge::alien_land(alien_id);
-        diagnostics::info("Area 17 alien reveal landed");
+        script_bridge::alien_land(spring, alien_id);
+        diagnostics::info(spring, "Area 17 alien reveal landed");
     }
 }
 
@@ -240,7 +251,11 @@ fn update_aim(ufo: &mut Ufo, ufo_position: Float3) {
     };
 }
 
-fn update_movement(global: &Global, ufo_position: Float3) {
+fn update_movement(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    global: &Global,
+    ufo_position: Float3,
+) {
     let (ufo_id, steering, x, z) = {
         let mut ufo = global.ufo.access_mut();
         let ufo_id = ufo.id;
@@ -248,7 +263,7 @@ fn update_movement(global: &Global, ufo_position: Float3) {
         let (x, z) = if steering {
             ufo.movement
         } else {
-            let velocity = definitions::unit_velocity(ufo_id).unwrap_or_default();
+            let velocity = definitions::unit_velocity(spring, ufo_id).unwrap_or_default();
             let speed = (velocity.x * velocity.x + velocity.z * velocity.z).sqrt();
             if ufo.moving || speed > BRAKE_SPEED {
                 ufo.moving = false;
@@ -262,29 +277,39 @@ fn update_movement(global: &Global, ufo_position: Float3) {
     if (x * x + z * z).sqrt() <= f32::EPSILON {
         return;
     }
-    let speed_multiplier = spring::get_unit_rules_param_f32(ufo_id, "selfMoveSpeedChange")
+    let speed_multiplier = spring
+        .rules_params()
+        .get_unit_rules_param_f32(ufo_id, "selfMoveSpeedChange")
         .unwrap_or(1.0)
         .max(0.0);
 
     let range = if steering { MOVE_RANGE } else { BRAKE_RANGE } * speed_multiplier;
     STEER
         .reach(range)
-        .apply_from(ufo_id, ufo_position, (x, z))
-        .log_err_once("Area 17 UFO controller: STEER");
+        .apply_from(spring, ufo_id, ufo_position, (x, z))
+        .log_err_once(spring, "Area 17 UFO controller: STEER");
     global.ufo.access_mut().moving = steering;
 }
 
-fn update_weapon_target(global: &Global, ufo_position: Float3) {
+fn update_weapon_target(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    global: &Global,
+    ufo_position: Float3,
+) {
     let mut ufo = global.ufo.access_mut();
     let Some(target) = ufo.weapon_target else {
         return;
     };
     let position = target_position_at(target, &ufo, ufo_position);
-    ufo.target_accepted = definitions::set_target(ufo.id, Some(position));
+    ufo.target_accepted = definitions::set_target(spring, ufo.id, Some(position));
 }
 
-fn target_position(ufo: &Ufo, target: WeaponTarget) -> Float3 {
-    definitions::unit_position(ufo.id)
+fn target_position(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    ufo: &Ufo,
+    target: WeaponTarget,
+) -> Float3 {
+    definitions::unit_position(spring, ufo.id)
         .map(|position| target_position_at(target, ufo, position))
         .unwrap_or(target.position)
 }
@@ -298,14 +323,14 @@ fn target_position_at(target: WeaponTarget, ufo: &Ufo, ufo_position: Float3) -> 
 }
 
 #[cfg(feature = "e2e")]
-fn grant_test_resources(global: &Global) {
+fn grant_test_resources(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global) {
     {
         let mut economy = global.economy.access_mut();
         economy.biomass += 10_000.0;
         economy.research += 10_000.0;
         economy.metal += 10_000.0;
     }
-    diagnostics::info("Area 17 test resources granted");
+    diagnostics::info(spring, "Area 17 test resources granted");
 }
 
 fn parse_point(fields: &mut Fields<'_>) -> Option<Float3> {

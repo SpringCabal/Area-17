@@ -110,42 +110,46 @@ pub struct UnitData {
 }
 
 impl UnitData {
-    fn load(def_id: i32) -> Option<Self> {
-        let definition = spring::get_unit_def_by_id(def_id).ok()?;
-        let dimensions = spring::utils::get_unit_def_dimensions(def_id).ok();
+    fn load(spring: &spring::Spring<'_, spring::RulesSynced>, def_id: i32) -> Option<Self> {
+        let definition = spring.unit_defs().get_unit_def_by_id(def_id).ok()?;
+        let dimensions = spring.utils().get_unit_def_dimensions(def_id).ok();
         Some(Self {
             mass: definition.physics.mass,
             can_fly: definition.physics.can_fly,
             can_move: definition.physics.can_move,
             can_hover: definition.physics.can_hover,
             is_building: definition.classify.is_building,
-            speed: spring::get_unit_def_speed(def_id).ok()?,
+            speed: spring.unit_defs().get_unit_def_speed(def_id).ok()?,
             acceleration: definition.physics.acceleration,
             brake_rate: definition.physics.brake_rate,
-            health: spring::get_unit_def_health(def_id).ok()?,
+            health: spring.unit_defs().get_unit_def_health(def_id).ok()?,
             height: dimensions.map_or(0.0, |dimensions| dimensions.height),
-            terrain_block: terrain_block(def_id),
+            terrain_block: terrain_block(spring, def_id),
             capture_value: ["biomass", "research", "metal"]
-                .map(|key| custom_param(def_id, key).unwrap_or(0.0)),
-            abduct_multiplier: custom_param(def_id, "abduct_mult").unwrap_or(1.0),
-            mid_and_aim: mid_and_aim(def_id, dimensions),
-            radius_and_height: radius_and_height(def_id, dimensions),
+                .map(|key| custom_param(spring, def_id, key).unwrap_or(0.0)),
+            abduct_multiplier: custom_param(spring, def_id, "abduct_mult").unwrap_or(1.0),
+            mid_and_aim: mid_and_aim(spring, def_id, dimensions),
+            radius_and_height: radius_and_height(spring, def_id, dimensions),
         })
     }
 }
 
-fn terrain_block(def_id: i32) -> Option<(f32, f32)> {
-    let x = custom_param(def_id, "terrainblock_x")?;
-    let z = custom_param(def_id, "terrainblock_z").unwrap_or(x);
+fn terrain_block(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    def_id: i32,
+) -> Option<(f32, f32)> {
+    let x = custom_param(spring, def_id, "terrainblock_x")?;
+    let z = custom_param(spring, def_id, "terrainblock_z").unwrap_or(x);
     Some((x / 2.0, z / 2.0))
 }
 
 fn mid_and_aim(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
     def_id: i32,
     dimensions: Option<spring::utils::UnitDefDimensions>,
 ) -> Option<(Float3, Float3)> {
-    let mid = custom_param_xyz(def_id, "midposoffset");
-    let aim = custom_param_xyz(def_id, "aimposoffset");
+    let mid = custom_param_xyz(spring, def_id, "midposoffset");
+    let aim = custom_param_xyz(spring, def_id, "aimposoffset");
     if mid.is_none() && aim.is_none() {
         return None;
     }
@@ -158,11 +162,12 @@ fn mid_and_aim(
 }
 
 fn radius_and_height(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
     def_id: i32,
     dimensions: Option<spring::utils::UnitDefDimensions>,
 ) -> Option<(f32, f32)> {
-    let radius = custom_param(def_id, "modelradius");
-    let height = custom_param(def_id, "modelheight");
+    let radius = custom_param(spring, def_id, "modelradius");
+    let height = custom_param(spring, def_id, "modelheight");
     if radius.is_none() && height.is_none() {
         return None;
     }
@@ -172,8 +177,15 @@ fn radius_and_height(
     ))
 }
 
-fn custom_param_xyz(def_id: i32, key: &str) -> Option<Float3> {
-    let text = spring::unit_defs::get_unit_def_custom_param(def_id, key).ok()?;
+fn custom_param_xyz(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    def_id: i32,
+    key: &str,
+) -> Option<Float3> {
+    let text = spring
+        .unit_defs()
+        .get_unit_def_custom_param(def_id, key)
+        .ok()?;
     let mut numbers = text
         .split_whitespace()
         .map(|value| value.parse::<f32>().ok());
@@ -181,8 +193,14 @@ fn custom_param_xyz(def_id: i32, key: &str) -> Option<Float3> {
     Some(Float3::new(x, y, z))
 }
 
-fn custom_param(def_id: i32, key: &str) -> Option<f32> {
-    spring::unit_defs::get_unit_def_custom_param(def_id, key)
+fn custom_param(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    def_id: i32,
+    key: &str,
+) -> Option<f32> {
+    spring
+        .unit_defs()
+        .get_unit_def_custom_param(def_id, key)
         .ok()?
         .trim()
         .parse()
@@ -215,11 +233,13 @@ pub struct AreaDamage {
 }
 
 impl WeaponBehaviour {
-    fn load(weapon_def_id: i32) -> Self {
-        let keys = spring::weapon_defs::get_weapon_def_custom_param_keys(weapon_def_id)
+    fn load(spring: &spring::Spring<'_, spring::RulesSynced>, weapon_def_id: i32) -> Self {
+        let keys = spring
+            .weapon_defs()
+            .get_weapon_def_custom_param_keys(weapon_def_id)
             .unwrap_or_default();
         let has = |key: &str| keys.iter().any(|candidate| candidate == key);
-        let number = |key: &str| weapon_custom_param(weapon_def_id, key);
+        let number = |key: &str| weapon_custom_param(spring, weapon_def_id, key);
         let impulse = number("impulse").map(|magnitude| Impulse {
             magnitude,
             normal_damage: has("normaldamage"),
@@ -233,8 +253,12 @@ impl WeaponBehaviour {
                 Some(AreaDamage {
                     damage,
                     radius: number("area_damage_radius")?,
-                    impulse: weapon_custom_param_text(weapon_def_id, "area_damage_is_impulse")
-                        .as_deref()
+                    impulse: weapon_custom_param_text(
+                        spring,
+                        weapon_def_id,
+                        "area_damage_is_impulse",
+                    )
+                    .as_deref()
                         == Some("1"),
                     duration_frames,
                     range_falloff: number("area_damage_range_falloff")?,
@@ -250,12 +274,23 @@ impl WeaponBehaviour {
     }
 }
 
-fn weapon_custom_param_text(weapon_def_id: i32, key: &str) -> Option<String> {
-    spring::weapon_defs::get_weapon_def_custom_param(weapon_def_id, key).ok()
+fn weapon_custom_param_text(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    weapon_def_id: i32,
+    key: &str,
+) -> Option<String> {
+    spring
+        .weapon_defs()
+        .get_weapon_def_custom_param(weapon_def_id, key)
+        .ok()
 }
 
-fn weapon_custom_param(weapon_def_id: i32, key: &str) -> Option<f32> {
-    weapon_custom_param_text(weapon_def_id, key)?
+fn weapon_custom_param(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    weapon_def_id: i32,
+    key: &str,
+) -> Option<f32> {
+    weapon_custom_param_text(spring, weapon_def_id, key)?
         .trim()
         .parse()
         .ok()
@@ -270,15 +305,19 @@ struct Defs {
 }
 
 impl Defs {
-    fn load() -> Self {
-        let unit_ids = UnitKind::ALL
-            .map(|kind| spring::get_unit_def_id_by_name(kind.def_name()).unwrap_or(-1));
+    fn load(spring: &spring::Spring<'_, spring::RulesSynced>) -> Self {
+        let unit_ids = UnitKind::ALL.map(|kind| {
+            spring
+                .unit_defs()
+                .get_unit_def_id_by_name(kind.def_name())
+                .unwrap_or(-1)
+        });
         let mut by_def = Vec::new();
         for (kind, def_id) in UnitKind::ALL.into_iter().zip(unit_ids) {
             let Ok(index) = usize::try_from(def_id) else {
                 continue;
             };
-            let Some(physics) = UnitData::load(def_id) else {
+            let Some(physics) = UnitData::load(spring, def_id) else {
                 continue;
             };
             if by_def.len() <= index {
@@ -289,12 +328,12 @@ impl Defs {
         Self {
             unit_ids,
             by_def,
-            weapon_ids: Weapon::ALL.map(|weapon| weapon_id(weapon_def_name(weapon))),
+            weapon_ids: Weapon::ALL.map(|weapon| weapon_id(spring, weapon_def_name(weapon))),
             god_gun_ids: [
-                weapon_id("ufo_independencedaygun"),
-                weapon_id("ufo_independencedaygunsilent"),
+                weapon_id(spring, "ufo_independencedaygun"),
+                weapon_id(spring, "ufo_independencedaygunsilent"),
             ],
-            weapon_behaviours: weapon_behaviours(),
+            weapon_behaviours: weapon_behaviours(spring),
         }
     }
 
@@ -304,8 +343,11 @@ impl Defs {
     }
 }
 
-fn weapon_behaviours() -> Vec<WeaponBehaviour> {
-    let ids = spring::weapon_defs::get_weapon_def_i_ds(0).unwrap_or_default();
+fn weapon_behaviours(spring: &spring::Spring<'_, spring::RulesSynced>) -> Vec<WeaponBehaviour> {
+    let ids = spring
+        .weapon_defs()
+        .get_weapon_def_ids()
+        .unwrap_or_default();
     let mut behaviours = Vec::new();
     for id in ids {
         let Ok(index) = usize::try_from(id) else {
@@ -314,41 +356,54 @@ fn weapon_behaviours() -> Vec<WeaponBehaviour> {
         if behaviours.len() <= index {
             behaviours.resize(index + 1, WeaponBehaviour::default());
         }
-        behaviours[index] = WeaponBehaviour::load(id);
+        behaviours[index] = WeaponBehaviour::load(spring, id);
     }
     behaviours
 }
 
-fn weapon_id(name: &str) -> i32 {
-    spring::weapon_defs::get_weapon_def_id(name).unwrap_or(-1)
+fn weapon_id(spring: &spring::Spring<'_, spring::RulesSynced>, name: &str) -> i32 {
+    spring.weapon_defs().get_weapon_def_id(name).unwrap_or(-1)
 }
 
-static DEFS: DefCache<Defs> = DefCache::new(Defs::load);
+static DEFS: DefCache<Defs> = DefCache::new();
 
-fn with<R>(f: impl FnOnce(&Defs) -> R) -> R {
-    f(DEFS.get())
+fn with<R>(spring: &spring::Spring<'_, spring::RulesSynced>, f: impl FnOnce(&Defs) -> R) -> R {
+    f(DEFS.get_or_init(|| Defs::load(spring)))
 }
 
-pub fn unit_def(kind: UnitKind) -> Option<i32> {
-    with(|defs| Some(defs.unit_ids[kind.index()]).filter(|id| *id >= 0))
+pub fn unit_def(spring: &spring::Spring<'_, spring::RulesSynced>, kind: UnitKind) -> Option<i32> {
+    with(spring, |defs| {
+        Some(defs.unit_ids[kind.index()]).filter(|id| *id >= 0)
+    })
 }
 
-pub fn kind(def_id: i32) -> Option<UnitKind> {
-    with(|defs| defs.entry(def_id).map(|(kind, _)| kind))
+pub fn kind(spring: &spring::Spring<'_, spring::RulesSynced>, def_id: i32) -> Option<UnitKind> {
+    with(spring, |defs| defs.entry(def_id).map(|(kind, _)| kind))
 }
 
-pub fn unit_kind(unit_id: i32) -> Option<UnitKind> {
-    spring::get_unit_def_id(unit_id)
+pub fn unit_kind(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    unit_id: i32,
+) -> Option<UnitKind> {
+    spring
+        .units_info()
+        .get_unit_def_id(unit_id)
         .ok()
-        .and_then(|def| kind(def.0))
+        .and_then(|def| kind(spring, def))
 }
 
-pub fn unit_data(def_id: i32) -> Option<UnitData> {
-    with(|defs| defs.entry(def_id).map(|(_, physics)| physics)).or_else(|| UnitData::load(def_id))
+pub fn unit_data(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    def_id: i32,
+) -> Option<UnitData> {
+    with(spring, |defs| {
+        defs.entry(def_id).map(|(_, physics)| physics)
+    })
+    .or_else(|| UnitData::load(spring, def_id))
 }
 
-pub fn weapon(weapon: Weapon) -> i32 {
-    with(|defs| defs.weapon_ids[weapon.index()])
+pub fn weapon(spring: &spring::Spring<'_, spring::RulesSynced>, weapon: Weapon) -> i32 {
+    with(spring, |defs| defs.weapon_ids[weapon.index()])
 }
 
 const fn weapon_def_name(weapon: Weapon) -> &'static str {
@@ -360,12 +415,15 @@ const fn weapon_def_name(weapon: Weapon) -> &'static str {
     }
 }
 
-pub fn weapon_behaviour(weapon_def_id: i32) -> Option<WeaponBehaviour> {
+pub fn weapon_behaviour(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    weapon_def_id: i32,
+) -> Option<WeaponBehaviour> {
     let index = usize::try_from(weapon_def_id).ok()?;
-    with(|defs| defs.weapon_behaviours.get(index).copied())
+    with(spring, |defs| defs.weapon_behaviours.get(index).copied())
         .filter(|behaviour| *behaviour != WeaponBehaviour::default())
 }
 
-pub fn god_gun_weapons() -> [i32; 2] {
-    with(|defs| defs.god_gun_ids)
+pub fn god_gun_weapons(spring: &spring::Spring<'_, spring::RulesSynced>) -> [i32; 2] {
+    with(spring, |defs| defs.god_gun_ids)
 }

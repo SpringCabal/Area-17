@@ -23,13 +23,17 @@ impl Gadget<Global> for UnitDronesGadget {
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
-        drones::update(ctx.global(), &self.drones, frame);
+        let spring = ctx.spring();
+        drones::update(spring, ctx.global(), &self.drones, frame);
         #[cfg(feature = "diagnostics")]
         if frame.rem_euclid(300) == 0 {
-            crate::diagnostics::info(&alloc::format!(
-                "drones frame={frame} count={}",
-                self.drones.borrow().drones.len(),
-            ));
+            crate::diagnostics::info(
+                spring,
+                &alloc::format!(
+                    "drones frame={frame} count={}",
+                    self.drones.borrow().drones.len(),
+                ),
+            );
         }
     }
 
@@ -41,7 +45,8 @@ impl Gadget<Global> for UnitDronesGadget {
         _team: i32,
         _builder: i32,
     ) {
-        drones::unit_created(&mut self.drones.borrow_mut(), unit, def);
+        let spring = _ctx.spring();
+        drones::unit_created(spring, &mut self.drones.borrow_mut(), unit, def);
     }
 
     fn unit_destroyed(

@@ -13,34 +13,41 @@ pub struct FrameSnapshot {
     pub max_health: f32,
 }
 
-pub fn info(message: &str) {
+pub fn info(_spring: &spring::Spring<'_, spring::RulesSynced>, message: &str) {
     #[cfg(feature = "diagnostics")]
-    spring::log_info!(SECTION, "{message}");
+    spring::log_info!(_spring, SECTION, "{message}");
     #[cfg(not(feature = "diagnostics"))]
     let _ = message;
 }
 
-pub fn debug(message: &str) {
+pub fn debug(_spring: &spring::Spring<'_, spring::RulesSynced>, message: &str) {
     #[cfg(feature = "diagnostics")]
-    spring::log_debug!(SECTION, "{message}");
+    spring::log_debug!(_spring, SECTION, "{message}");
     #[cfg(not(feature = "diagnostics"))]
     let _ = message;
 }
 
 #[cfg(feature = "diagnostics")]
-pub fn frame(frame: i32, snapshot: FrameSnapshot) {
+pub fn frame(
+    _spring: &spring::Spring<'_, spring::RulesSynced>,
+    frame: i32,
+    snapshot: FrameSnapshot,
+) {
     if frame.rem_euclid(300) == 0 {
-        info(&format!(
-            "ufo frame={frame} id={} pos=({:.1},{:.1},{:.1}) aim=({:.1},{:.1},{:.1}) health={:.1}/{:.1}",
-            snapshot.ufo_id,
-            snapshot.position.x,
-            snapshot.position.y,
-            snapshot.position.z,
-            snapshot.aim.x,
-            snapshot.aim.y,
-            snapshot.aim.z,
-            snapshot.health,
-            snapshot.max_health,
-        ));
+        info(
+            _spring,
+            &format!(
+                "ufo frame={frame} id={} pos=({:.1},{:.1},{:.1}) aim=({:.1},{:.1},{:.1}) health={:.1}/{:.1}",
+                snapshot.ufo_id,
+                snapshot.position.x,
+                snapshot.position.y,
+                snapshot.position.z,
+                snapshot.aim.x,
+                snapshot.aim.y,
+                snapshot.aim.z,
+                snapshot.health,
+                snapshot.max_health,
+            ),
+        );
     }
 }

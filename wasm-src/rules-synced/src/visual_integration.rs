@@ -68,11 +68,19 @@ impl TestState {
         }
     }
 
-    pub fn explosion(&mut self, weapon_id: i32, position: spring::Float3) {
-        if self.crater_impact.is_some() || !defs::god_gun_weapons().contains(&weapon_id) {
+    pub fn explosion(
+        &mut self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        weapon_id: i32,
+        position: spring::Float3,
+    ) {
+        if self.crater_impact.is_some() || !defs::god_gun_weapons(spring).contains(&weapon_id) {
             return;
         }
-        let ground = spring::get_ground_height(position.x, position.z).unwrap_or(position.y);
+        let ground = spring
+            .terrain()
+            .get_ground_height(position.x, position.z)
+            .unwrap_or(position.y);
         if position.y - ground <= 2.0 {
             self.crater_before = ground;
             self.crater_impact = Some(position);
@@ -80,43 +88,55 @@ impl TestState {
     }
 }
 
-fn clear_crater_site(ufo_id: i32) {
-    let Some(position) = definitions::unit_position(ufo_id) else {
+fn clear_crater_site(spring: &spring::Spring<'_, spring::RulesSynced>, ufo_id: i32) {
+    let Some(position) = definitions::unit_position(spring, ufo_id) else {
         return;
     };
-    let units = spring::get_units_in_cylinder(position.x, position.z, 640.0, -1);
+    let units = spring
+        .units_query()
+        .get_units_in_cylinder(position.x, position.z, 640.0, -1);
     for unit_id in units.unwrap_or_default() {
         if unit_id != ufo_id {
-            let _ = definitions::destroy_reclaimed(unit_id);
+            let _ = definitions::destroy_reclaimed(spring, unit_id);
         }
     }
 }
 
-pub fn update(test: &mut TestState, global: &Global, frame: i32) {
+pub fn update(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    test: &mut TestState,
+    global: &Global,
+    frame: i32,
+) {
     test.target_accepted |= global.ufo.access().target_accepted;
-    update_test(test, global, frame);
+    update_test(spring, test, global, frame);
 }
 
-fn update_test(test: &mut TestState, global: &Global, frame: i32) {
+fn update_test(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    test: &mut TestState,
+    global: &Global,
+    frame: i32,
+) {
     let ufo_id = global.ufo.access().id;
     if test.suite.is_finished() || ufo_id < 0 {
         return;
     }
     let start = *test.start_frame.get_or_insert_with(|| {
-        clear_crater_site(ufo_id);
-        prepare(global);
+        clear_crater_site(spring, ufo_id);
+        prepare(spring, global);
         test.ufo_id = ufo_id;
         for (index, weapon) in Weapon::ALL.iter().enumerate() {
-            test.weapon_ids[index] = defs::weapon(*weapon);
+            test.weapon_ids[index] = defs::weapon(spring, *weapon);
         }
-        test.origin = definitions::unit_position(ufo_id);
-        let _ = definitions::set_velocity(ufo_id, spring::Float3::default());
-        spring::log_info!(SECTION, "{TAG} Input fixture ready");
+        test.origin = definitions::unit_position(spring, ufo_id);
+        let _ = definitions::set_velocity(spring, ufo_id, spring::Float3::default());
+        spring::log_info!(spring, SECTION, "{TAG} Input fixture ready");
         frame
     });
 
     let elapsed = frame - start;
-    run_crater_sequence(test, global, elapsed);
+    run_crater_sequence(spring, test, global, elapsed);
 
     for ability in Ability::ALL {
         let tech = global.tech.access();
@@ -134,7 +154,7 @@ fn update_test(test: &mut TestState, global: &Global, frame: i32) {
             && activated_by_ui
             && test.crater_depth >= 100.0;
         if passed {
-            test.suite.check(
+            test.suite.check(spring,
                 true,
                 "UI input reached the rules through the engine: four weapons fired, four abilities requested, and haste, cloak and teleport activated; the God Gun crater scenario completed",
             );
@@ -147,23 +167,28 @@ fn update_test(test: &mut TestState, global: &Global, frame: i32) {
                 test.abilities_activated,
                 test.crater_depth,
             );
-            test.suite.check(false, message);
+            test.suite.check(spring, false, message);
         }
-        test.suite.finish();
+        test.suite.finish(spring);
     }
 }
 
-fn run_crater_sequence(test: &mut TestState, global: &Global, elapsed: i32) {
+fn run_crater_sequence(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    test: &mut TestState,
+    global: &Global,
+    elapsed: i32,
+) {
     let ufo_id = global.ufo.access().id;
     if elapsed == BASELINE_CLEAR_FRAME {
         if let Some(origin) = test.origin {
-            move_ufo(ufo_id, origin, -900.0);
+            move_ufo(spring, ufo_id, origin, -900.0);
         }
         return;
     }
     if elapsed == BASELINE_RESTORE_FRAME {
         if let Some(origin) = test.origin {
-            move_ufo(ufo_id, origin, 0.0);
+            move_ufo(spring, ufo_id, origin, 0.0);
         }
         return;
     }
@@ -174,7 +199,7 @@ fn run_crater_sequence(test: &mut TestState, global: &Global, elapsed: i32) {
             tech.ability_cooldowns[index] = 0;
             tech.ability_durations[index] = 0;
         }
-        upgrades::activate_ability(global, Ability::IndependenceDayGun);
+        upgrades::activate_ability(spring, global, Ability::IndependenceDayGun);
         return;
     }
     if elapsed == GOD_GUN_STOP_FRAME {
@@ -185,13 +210,17 @@ fn run_crater_sequence(test: &mut TestState, global: &Global, elapsed: i32) {
         return;
     }
     let Some(impact) = test.crater_impact else {
-        spring::log_warning!(SECTION, "{TAG} God Gun never reached bare ground");
+        spring::log_warning!(spring, SECTION, "{TAG} God Gun never reached bare ground");
         return;
     };
-    let current = spring::get_ground_height(impact.x, impact.z).unwrap_or(test.crater_before);
+    let current = spring
+        .terrain()
+        .get_ground_height(impact.x, impact.z)
+        .unwrap_or(test.crater_before);
     test.crater_depth = (current - test.crater_before).abs();
-    move_ufo(ufo_id, impact, -900.0);
+    move_ufo(spring, ufo_id, impact, -900.0);
     spring::log_info!(
+        spring,
         SECTION,
         "{TAG} God Gun crater ready for rendered capture: depth={:.1} at ({:.1}, {:.1})",
         test.crater_depth,
@@ -200,17 +229,26 @@ fn run_crater_sequence(test: &mut TestState, global: &Global, elapsed: i32) {
     );
 }
 
-fn move_ufo(unit_id: i32, origin: spring::Float3, x_offset: f32) {
+fn move_ufo(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    unit_id: i32,
+    origin: spring::Float3,
+    x_offset: f32,
+) {
     let position = spring::Float3 {
         x: origin.x + x_offset,
-        y: spring::get_ground_height(origin.x + x_offset, origin.z).unwrap_or(origin.y) + 180.0,
+        y: spring
+            .terrain()
+            .get_ground_height(origin.x + x_offset, origin.z)
+            .unwrap_or(origin.y)
+            + 180.0,
         z: origin.z,
     };
-    let _ = definitions::set_position(unit_id, position);
-    let _ = definitions::set_velocity(unit_id, spring::Float3::default());
+    let _ = definitions::set_position(spring, unit_id, position);
+    let _ = definitions::set_velocity(spring, unit_id, spring::Float3::default());
 }
 
-fn prepare(global: &Global) {
+fn prepare(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global) {
     {
         let mut economy = global.economy.access_mut();
         economy.research = 1_000_000.0;
@@ -218,7 +256,7 @@ fn prepare(global: &Global) {
     }
     for tech in TechId::ALL {
         if !state::tech(&global.tech.access(), tech).unlocked {
-            let _ = upgrades::unlock(global, tech);
+            let _ = upgrades::unlock(spring, global, tech);
         }
     }
 }

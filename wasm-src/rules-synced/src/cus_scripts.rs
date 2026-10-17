@@ -82,14 +82,26 @@ fn explode(ctx: &UnitCtx, piece: Piece, flags: SfxFlags) {
     }
 }
 
-fn play_sound(name: &str, volume: f32, unit: UnitId) {
-    let position = spring::get_unit_position(unit, false, false).unwrap_or_default();
-    spring::sound::play_sound_file(name, volume, position, spring::Float3::default(), 0)
-        .log_err_once("Area 17 unit script: play sound file");
+fn play_sound(ctx: &UnitCtx, name: &str, volume: f32) {
+    ctx.with_spring(|spring| {
+        let position = spring
+            .units_info()
+            .get_unit_position(ctx.unit().0, Default::default())
+            .unwrap_or_default();
+        spring
+            .sound()
+            .play_sound_file(name, volume, position, spring::Float3::default(), 0)
+            .log_err_once(spring, "Area 17 unit script: play sound file");
+        Ok(())
+    })
+    .expect("Area 17 unit-script engine scope");
 }
 
-fn script_kind_for_def(def: i32) -> Option<ScriptKind> {
-    Some(match defs::kind(def)? {
+fn script_kind_for_def(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    def: i32,
+) -> Option<ScriptKind> {
+    Some(match defs::kind(spring, def)? {
         UnitKind::Ufo => ScriptKind::Ufo,
         UnitKind::Drone => ScriptKind::Drone,
         UnitKind::Tank | UnitKind::SmallTank => ScriptKind::Tank,
@@ -294,7 +306,12 @@ impl UnitScript for Area17UnitScript {
     ) -> Option<bool> {
         match &mut self.0 {
             Script::Ufo(state) => {
-                let point_defense = spring::get_unit_rules_param_f32(ctx.unit(), "PDisUnlocked")
+                let point_defense = ctx
+                    .with_spring(|spring| {
+                        spring
+                            .rules_params()
+                            .get_unit_rules_param_f32(ctx.unit().0, "PDisUnlocked")
+                    })
                     .unwrap_or(0.0)
                     > 0.0;
                 let ready = (ufo_slots::POINT_DEFENSE.contains(&weapon.0) && point_defense)
@@ -337,7 +354,7 @@ impl UnitScript for Area17UnitScript {
             }
             Script::Tank(tank) => {
                 tank.current_barrel = (tank.current_barrel + 1) % tank.barrels.len();
-                play_sound("sounds/rocket.wav", 70.0, ctx.unit());
+                play_sound(ctx, "sounds/rocket.wav", 70.0);
             }
             _ => {}
         }

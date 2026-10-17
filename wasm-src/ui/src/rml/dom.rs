@@ -3,11 +3,13 @@ use alloc::string::String;
 
 use super::state::Hud;
 
-pub fn element(hud: &Hud, id: &str) -> u64 {
+pub fn element(spring: &spring::Spring<'_, spring::Ui>, hud: &Hud, id: &str) -> u64 {
     if hud.document == 0 {
         return 0;
     }
-    spring::element_get_element_by_id(hud.document, id)
+    spring
+        .rml_ui()
+        .element_get_element_by_id(hud.document, id)
         .ok()
         .filter(|element| element.exists)
         .map_or(0, |element| element.element_handle)

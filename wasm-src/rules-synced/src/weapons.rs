@@ -1,7 +1,7 @@
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use core::cell::RefCell;
-use spring::{ResultExt, commands};
+use spring::ResultExt;
 
 use spring::Float3;
 
@@ -77,28 +77,40 @@ pub struct LingeringArea {
     repeat_effect: Option<f32>,
 }
 
-pub fn apply_impulses(impulses: Impulses, gravity_per_frame: f32) {
+pub fn apply_impulses(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    impulses: Impulses,
+    gravity_per_frame: f32,
+) {
     for (unit_id, pending) in impulses.0 {
         let mut impulse = pending.impulse;
         match pending.move_type {
             MoveType::Gunship => {
-                if let Some(velocity) = definitions::unit_velocity(unit_id) {
-                    definitions::set_velocity(unit_id, velocity + impulse);
+                if let Some(velocity) = definitions::unit_velocity(spring, unit_id) {
+                    definitions::set_velocity(spring, unit_id, velocity + impulse);
                 }
             }
             MoveType::FixedWing => {
-                definitions::add_impulse(unit_id, impulse);
+                definitions::add_impulse(spring, unit_id, impulse);
             }
             MoveType::Ground => {
                 if pending.push_off_ground {
                     impulse.y += GROUND_PUSH_GRAVITY_FACTOR * gravity_per_frame;
                 }
                 if pending.unstick {
-                    definitions::add_impulse(unit_id, Float3::new(UNSTICK_IMPULSE, 0.0, 0.0));
+                    definitions::add_impulse(
+                        spring,
+                        unit_id,
+                        Float3::new(UNSTICK_IMPULSE, 0.0, 0.0),
+                    );
                 }
-                definitions::add_impulse(unit_id, impulse);
+                definitions::add_impulse(spring, unit_id, impulse);
                 if pending.unstick {
-                    definitions::add_impulse(unit_id, Float3::new(-UNSTICK_IMPULSE, 0.0, 0.0));
+                    definitions::add_impulse(
+                        spring,
+                        unit_id,
+                        Float3::new(-UNSTICK_IMPULSE, 0.0, 0.0),
+                    );
                 }
             }
         }
@@ -106,6 +118,7 @@ pub fn apply_impulses(impulses: Impulses, gravity_per_frame: f32) {
 }
 
 pub fn update(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
     global: &Global,
     areas: &mut Vec<LingeringArea>,
     impulses: &RefCell<Impulses>,
@@ -116,7 +129,7 @@ pub fn update(
             if let Some(size) = area.repeat_effect
                 && area.expires >= frame as f32
             {
-                spawn_effect(BLACK_HOLE_EFFECT, area.position, size);
+                spawn_effect(spring, BLACK_HOLE_EFFECT, area.position, size);
             }
         }
     }
@@ -124,21 +137,22 @@ pub fn update(
         return;
     }
     for area in areas.iter_mut() {
-        apply_area(global, impulses, area, frame);
+        apply_area(spring, global, impulses, area, frame);
         area.damage -= area.time_loss;
     }
     areas.retain(|area| (frame as f32) < area.expires);
 }
 
 pub fn explosion(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
     tech: &Tech,
     weapon_id: i32,
     position: Float3,
     owner_id: i32,
 ) -> Option<LingeringArea> {
-    let area = defs::weapon_behaviour(weapon_id)?.area?;
-    let fire = weapon_id == defs::weapon(Weapon::IncendiaryBeamLaser);
-    let black_hole = weapon_id == defs::weapon(Weapon::BlackHoleGun);
+    let area = defs::weapon_behaviour(spring, weapon_id)?.area?;
+    let fire = weapon_id == defs::weapon(spring, Weapon::IncendiaryBeamLaser);
+    let black_hole = weapon_id == defs::weapon(spring, Weapon::BlackHoleGun);
     let (radius_multiplier, damage_multiplier, duration_multiplier) = if fire {
         (
             1.0,
@@ -156,9 +170,9 @@ pub fn explosion(
     };
     let duration = area.duration_frames * duration_multiplier;
     if fire {
-        spawn_effect(FIRE_EFFECT, position, duration);
+        spawn_effect(spring, FIRE_EFFECT, position, duration);
     } else if black_hole {
-        spawn_effect(BLACK_HOLE_EFFECT, position, duration);
+        spawn_effect(spring, BLACK_HOLE_EFFECT, position, duration);
     }
     Some(LingeringArea {
         weapon_id,
@@ -168,13 +182,14 @@ pub fn explosion(
         time_loss: area.time_loss / duration_multiplier,
         range_falloff: area.range_falloff,
         impulse: area.impulse,
-        expires: spring::game::current_frame() as f32 + duration,
+        expires: spring.game().current_frame().unwrap_or(0) as f32 + duration,
         owner_id,
         repeat_effect: black_hole.then_some(duration),
     })
 }
 
 pub fn pre_damaged(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
     global: &Global,
     impulses: &RefCell<Impulses>,
     unit_id: i32,
@@ -183,24 +198,25 @@ pub fn pre_damaged(
     weapon_def_id: i32,
     attacker_id: i32,
 ) -> Option<f32> {
-    let behaviour = defs::weapon_behaviour(weapon_def_id)?;
+    let behaviour = defs::weapon_behaviour(spring, weapon_def_id)?;
     if let Some(frames) = behaviour.fall_immunity {
         global
             .fall_immunity
             .access_mut()
-            .grant(unit_id, spring::game::current_frame() + frames);
+            .grant(unit_id, spring.game().current_frame().unwrap_or(0) + frames);
     }
     let mut damage = damage;
     if let Some(impulse) = behaviour.impulse
-        && let Some(attacker) = definitions::unit_position(attacker_id)
+        && let Some(attacker) = definitions::unit_position(spring, attacker_id)
     {
-        if let Some(target) = definitions::unit_position(unit_id) {
-            let multiplier = if weapon_def_id == defs::weapon(Weapon::GravityBeam) {
+        if let Some(target) = definitions::unit_position(spring, unit_id) {
+            let multiplier = if weapon_def_id == defs::weapon(spring, Weapon::GravityBeam) {
                 upgrades::gravity_impulse_multiplier(&global.tech.access())
             } else {
                 1.0
             };
             queue_impulse(
+                spring,
                 impulses,
                 unit_id,
                 unit_def_id,
@@ -223,10 +239,25 @@ pub fn pre_damaged(
     Some(damage)
 }
 
-fn apply_area(global: &Global, impulses: &RefCell<Impulses>, area: &LingeringArea, frame: i32) {
-    let units = spring::get_units_in_sphere(area.position, area.radius, -1).unwrap_or_default();
+fn apply_area(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    global: &Global,
+    impulses: &RefCell<Impulses>,
+    area: &LingeringArea,
+    frame: i32,
+) {
+    let units = spring
+        .units_query()
+        .get_units_in_sphere(
+            area.position.x,
+            area.position.y,
+            area.position.z,
+            area.radius,
+            -1,
+        )
+        .unwrap_or_default();
     for unit_id in units {
-        let Some(position) = definitions::unit_base_position(unit_id) else {
+        let Some(position) = definitions::unit_base_position(spring, unit_id) else {
             continue;
         };
         let mut damage = area.damage;
@@ -234,10 +265,11 @@ fn apply_area(global: &Global, impulses: &RefCell<Impulses>, area: &LingeringAre
             damage -= damage * area.range_falloff * position.distance(area.position) / area.radius;
         }
         if area.impulse {
-            let Some(unit_def_id) = definitions::unit_def_id(unit_id) else {
+            let Some(unit_def_id) = definitions::unit_def_id(spring, unit_id) else {
                 continue;
             };
             queue_impulse(
+                spring,
                 impulses,
                 unit_id,
                 unit_def_id,
@@ -253,15 +285,23 @@ fn apply_area(global: &Global, impulses: &RefCell<Impulses>, area: &LingeringAre
                 .fall_immunity
                 .access_mut()
                 .grant(unit_id, frame + BLACK_HOLE_FALL_IMMUNITY_FRAMES);
-            apply_air_drag(unit_id, unit_def_id, damage);
+            apply_air_drag(spring, unit_id, unit_def_id, damage);
         } else {
             let (weapon_id, owner_id) = (area.weapon_id, area.owner_id);
-            commands::run(move || {
-                if spring::get_unit_is_dead(unit_id).unwrap_or(true) {
-                    return;
-                }
-                spring::add_unit_damage(unit_id, damage, 0.0, weapon_id, owner_id, Float3::ZERO)
-                    .log_err_once("Area 17 weapons: add unit damage");
+            crate::with_addon_context(|ctx| {
+                ctx.commands().run(move |spring| {
+                    if spring
+                        .units_info()
+                        .get_unit_is_dead(unit_id)
+                        .unwrap_or(true)
+                    {
+                        return;
+                    }
+                    spring
+                        .unit_control()
+                        .add_unit_damage(unit_id, damage, 0.0, weapon_id, owner_id, Float3::ZERO)
+                        .log_err_once(spring, "Area 17 weapons: add unit damage");
+                })
             });
         }
     }
@@ -275,6 +315,7 @@ struct ImpulseOptions {
 }
 
 fn queue_impulse(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
     impulses: &RefCell<Impulses>,
     unit_id: i32,
     unit_def_id: i32,
@@ -282,7 +323,7 @@ fn queue_impulse(
     magnitude: f32,
     options: ImpulseOptions,
 ) {
-    let Some(physics) = defs::unit_data(unit_def_id) else {
+    let Some(physics) = defs::unit_data(spring, unit_def_id) else {
         return;
     };
     let Some(move_type) = MoveType::of(&physics) else {
@@ -304,7 +345,7 @@ fn queue_impulse(
         MoveType::Gunship => impulse.y *= GUNSHIP_VERTICAL_MULTIPLIER,
         MoveType::Ground => {
             impulse.y += magnitude.abs() / (20.0 * physics.mass);
-            push_off_ground = options.push_off_ground && definitions::is_on_ground(unit_id);
+            push_off_ground = options.push_off_ground && definitions::is_on_ground(spring, unit_id);
         }
     }
     let mut impulses = impulses.borrow_mut();
@@ -319,18 +360,40 @@ fn queue_impulse(
     pending.unstick |= options.unstick;
 }
 
-fn apply_air_drag(unit_id: i32, unit_def_id: i32, damage: f32) {
-    let Some(physics) = defs::unit_data(unit_def_id) else {
+fn apply_air_drag(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    unit_id: i32,
+    unit_def_id: i32,
+    damage: f32,
+) {
+    let Some(physics) = defs::unit_data(spring, unit_def_id) else {
         return;
     };
-    let Some(velocity) = definitions::unit_velocity(unit_id) else {
+    let Some(velocity) = definitions::unit_velocity(spring, unit_id) else {
         return;
     };
     let factor = damage / (damage + physics.mass.powf(1.5));
-    definitions::set_velocity(unit_id, velocity * (1.0 - factor));
+    definitions::set_velocity(spring, unit_id, velocity * (1.0 - factor));
 }
 
-fn spawn_effect(name: &str, position: Float3, size: f32) {
-    spring::spawn_ceg(name, position, Float3::new(0.0, 1.0, 0.0), size, size, 1.0)
-        .log_err_once("Area 17 weapons: spawn ceg");
+fn spawn_effect(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    name: &str,
+    position: Float3,
+    size: f32,
+) {
+    spring
+        .effects_control()
+        .spawn_ceg(
+            &spring::effects_control::DefRef {
+                name: name.to_owned(),
+                id: -1,
+            },
+            position,
+            Float3::new(0.0, 1.0, 0.0),
+            size,
+            size,
+            1.0,
+        )
+        .log_err_once(spring, "Area 17 weapons: spawn ceg");
 }

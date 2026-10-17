@@ -120,9 +120,14 @@ pub(super) fn create(ctx: &UnitCtx, state: Rc<RefCell<UfoState>>) {
 
 fn gun_heading(ctx: &UnitCtx, pieces: &UfoPieces, index: usize) -> f32 {
     let position = |piece: Piece| {
-        spring::units_pieces::get_unit_piece_position(ctx.unit().0, piece.0 + 1)
-            .log_err_once("Area 17 UFO script: get unit piece position")
-            .unwrap_or_default()
+        ctx.with_spring(|spring| {
+            Ok(spring
+                .units_pieces()
+                .get_unit_piece_position(ctx.unit().0, piece.0 + 1)
+                .log_err_once(spring, "Area 17 UFO script: get unit piece position")
+                .unwrap_or_default())
+        })
+        .unwrap_or_default()
     };
     let hull = position(pieces.outer_hull[index]);
     let base = position(pieces.bases[index]);
@@ -174,8 +179,14 @@ pub(super) fn set_current_weapon(
     let mut state = state.borrow_mut();
     state.current_weapon = weapon;
     if state.slot.replace(slot) != Some(slot) {
-        spring::set_unit_rules_param_f32(ctx.unit(), "active_weapon_slot", slot as f32, PUBLIC)
-            .log_err_once("Area 17 UFO script: set unit rules param f32");
+        ctx.with_spring(|spring| {
+            spring
+                .rules_params()
+                .set_unit_rules_param_f32(ctx.unit().0, "active_weapon_slot", slot as f32, PUBLIC)
+                .log_err_once(spring, "Area 17 UFO script: set active weapon slot");
+            Ok(())
+        })
+        .expect("Area 17 unit-script engine scope");
     }
 }
 
@@ -215,8 +226,14 @@ pub(super) fn set_beam(ctx: &UnitCtx, state: &RefCell<UfoState>, beam: f32) {
         return;
     }
     state.borrow_mut().beam = Some(beam);
-    spring::set_unit_rules_param_f32(ctx.unit(), "beam_enabled", beam, PUBLIC)
-        .log_err_once("Area 17 UFO script: set unit rules param f32");
+    ctx.with_spring(|spring| {
+        spring
+            .rules_params()
+            .set_unit_rules_param_f32(ctx.unit().0, "beam_enabled", beam, PUBLIC)
+            .log_err_once(spring, "Area 17 UFO script: set beam state");
+        Ok(())
+    })
+    .expect("Area 17 unit-script engine scope");
 }
 
 pub(super) fn aim(ctx: &UnitCtx, state: &RefCell<UfoState>) {
@@ -241,8 +258,13 @@ pub(super) fn aim_weapons(
     for (index, &start) in initial.iter().enumerate() {
         let base = pieces.bases[index];
         let gun = pieces.guns[index];
-        let Some(base_position) =
-            spring::units_pieces::get_unit_piece_pos_dir(ctx.unit().0, base.0 + 1).ok()
+        let Some(base_position) = ctx
+            .with_spring(|spring| {
+                spring
+                    .units_pieces()
+                    .get_unit_piece_pos_dir(ctx.unit().0, base.0 + 1)
+            })
+            .ok()
         else {
             continue;
         };

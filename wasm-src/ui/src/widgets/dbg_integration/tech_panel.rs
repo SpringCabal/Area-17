@@ -3,10 +3,12 @@ use crate::rml::{self, dom};
 use crate::state::{Global, SimulationState, TechState};
 use area17_shared::TechId;
 
-pub(super) fn enabled() -> bool {
-    spring::game_options::get_mod_option("tech_ui_test")
+pub(super) fn enabled(spring: &spring::Spring<'_, spring::Ui>) -> bool {
+    spring
+        .game()
+        .get_mod_option("tech_ui_test")
         .ok()
-        .flatten()
+        .and_then(|option| option.exists.then_some(option.value))
         .as_deref()
         == Some("1")
 }
@@ -42,24 +44,32 @@ fn fixture() -> SimulationState {
     simulation
 }
 
-pub(super) fn update(global: &Global) {
+pub(super) fn update(spring: &spring::Spring<'_, spring::Ui>, global: &Global) {
     if global.hud.access().context == 0 {
         return;
     }
     let simulation = fixture();
     global.panel.access_mut().upgrade_panel_open = true;
-    rml::refresh_hud(&mut global.hud.access_mut(), &simulation, true);
-    rml::update_context(global);
+    rml::refresh_hud(spring, &mut global.hud.access_mut(), &simulation, true);
+    rml::update_context(spring, global);
     let text = |id, expected| {
-        let element = dom::element(&global.hud.access(), id);
-        element != 0 && spring::element_get_inner_rml(element).is_ok_and(|value| value == expected)
+        let element = dom::element(spring, &global.hud.access(), id);
+        element != 0
+            && spring
+                .rml_ui()
+                .element_get_inner_rml(element)
+                .is_ok_and(|value| value == expected)
     };
     let hover = |index| {
-        let card = dom::element(&global.hud.access(), &alloc::format!("tech-card-{index}"));
-        let dispatched = spring::element_dispatch_event(card, "mouseover") == Ok(true);
+        let card = dom::element(
+            spring,
+            &global.hud.access(),
+            &alloc::format!("tech-card-{index}"),
+        );
+        let dispatched = spring.rml_ui().element_dispatch_event(card, "mouseover") == Ok(true);
         let received = global.hud.access().hovered_tech == Some(index);
-        rml::refresh_hud(&mut global.hud.access_mut(), &simulation, true);
-        rml::update_context(global);
+        rml::refresh_hud(spring, &mut global.hud.access_mut(), &simulation, true);
+        rml::update_context(spring, global);
         dispatched && received
     };
     let pulse = hover(TechId::PulseLaser.index())
@@ -92,12 +102,14 @@ pub(super) fn update(global: &Global) {
         && !can_activate(&simulation, TechId::GravityBeam.index());
     if valid {
         spring::log_once!(
+            spring,
             spring::log_level::NOTICE,
             crate::diagnostics::SECTION,
             "Area 17 technology fixture passed: Armor 3/10 +120%, Pulse 2/5, costs and affordability"
         );
     } else {
         spring::log_once!(
+            spring,
             spring::log_level::ERROR,
             crate::diagnostics::SECTION,
             "Area 17 technology fixture failed: level, total effect, cost or affordability binding"

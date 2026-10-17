@@ -150,7 +150,7 @@ async fn move_pad(state: Rc<RefCell<HelipadState>>, ctx: UnitCtx) {
         let state = state.borrow();
         (state.pieces, state.target)
     };
-    play_sound("sounds/click.ogg", 1.0, ctx.unit());
+    play_sound(&ctx, "sounds/click.ogg", 1.0);
     move_piece(&ctx, pieces.button, Axis::Z, target, 150.0);
     move_piece(
         &ctx,

@@ -18,10 +18,12 @@ impl Gadget<Global> for GameLoadGadget {
     }
 
     fn init(&self, _ctx: &spring_addons::AddonContext<'_, Global>) {
-        scenario::load();
+        let spring = _ctx.spring();
+        scenario::load(spring);
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
-        scenario::respawn(ctx.global(), frame);
+        let spring = ctx.spring();
+        scenario::respawn(spring, ctx.global(), frame);
     }
 }

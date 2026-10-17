@@ -21,10 +21,9 @@ pub mod visual_integration;
 pub mod weapon_multishot;
 pub mod weapons;
 
-spring::export_core_cus!(cus_scripts::Area17CusModule);
-
 spring_addons::export_rules_gadgets! {
     state: state::Global,
     setup: gadgets::setup,
     scratch: 8192,
+    cus: cus_scripts::Area17CusModule,
 }

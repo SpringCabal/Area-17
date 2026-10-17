@@ -69,17 +69,17 @@ impl TestState {
         self.tally.0.is_finished()
     }
 
-    fn pass(&mut self, message: impl Display) {
-        self.tally.0.check(true, message);
+    fn pass(&mut self, spring: &spring::Spring<'_, spring::RulesSynced>, message: impl Display) {
+        self.tally.0.check(spring, true, message);
     }
 
-    fn fail(&mut self, message: impl Display) {
-        self.tally.0.check(false, message);
-        self.tally.0.finish();
+    fn fail(&mut self, spring: &spring::Spring<'_, spring::RulesSynced>, message: impl Display) {
+        self.tally.0.check(spring, false, message);
+        self.tally.0.finish(spring);
     }
 
-    fn finish(&mut self) {
-        self.tally.0.finish();
+    fn finish(&mut self, spring: &spring::Spring<'_, spring::RulesSynced>) {
+        self.tally.0.finish(spring);
     }
 
     pub fn projectile_created(&mut self, owner_id: i32, weapon_def_id: i32) {
@@ -93,176 +93,248 @@ impl TestState {
         }
     }
 
-    pub fn explosion(&mut self, weapon_id: i32, position: spring::Float3) {
-        god_gun::explosion(self, weapon_id, position);
+    pub fn explosion(
+        &mut self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        weapon_id: i32,
+        position: spring::Float3,
+    ) {
+        god_gun::explosion(spring, self, weapon_id, position);
     }
 
-    pub fn unit_created(&mut self, unit_id: i32, unit_def_id: i32) {
-        civilians::unit_created(self, unit_id, unit_def_id);
+    pub fn unit_created(
+        &mut self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        unit_id: i32,
+        unit_def_id: i32,
+    ) {
+        civilians::unit_created(spring, self, unit_id, unit_def_id);
     }
 
-    pub fn pre_damaged(&mut self, unit_id: i32, weapon_def_id: i32) {
-        weapons::pre_damaged(self, unit_id, weapon_def_id);
+    pub fn pre_damaged(
+        &mut self,
+        spring: &spring::Spring<'_, spring::RulesSynced>,
+        unit_id: i32,
+        weapon_def_id: i32,
+    ) {
+        weapons::pre_damaged(spring, self, unit_id, weapon_def_id);
     }
 }
 
-fn send_input(test: &mut TestState, message: &str) {
-    if !spring::send_lua_rules_msg(message).unwrap_or(false) {
-        test.fail(alloc::format!(
-            "the engine refused the rules message {message}"
-        ));
+fn send_input(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    test: &mut TestState,
+    message: &str,
+) {
+    if !spring
+        .messages()
+        .send_lua_rules_msg(message)
+        .unwrap_or(false)
+    {
+        test.fail(
+            spring,
+            alloc::format!("the engine refused the rules message {message}"),
+        );
     }
 }
 
-fn remove_unit(unit: i32) {
-    definitions::destroy_reclaimed(unit).then(move |removed| {
+fn remove_unit(spring: &spring::Spring<'_, spring::RulesSynced>, unit: i32) {
+    definitions::destroy_reclaimed(spring, unit).then(move |spring, removed| {
         if !removed {
-            spring::log_error!(SECTION, "could not remove test unit {unit}");
+            spring::log_error!(spring, SECTION, "could not remove test unit {unit}");
         }
     });
 }
 
-pub fn update(test: &mut TestState, global: &Global, frame: i32) {
+pub fn update(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    test: &mut TestState,
+    global: &Global,
+    frame: i32,
+) {
     if test.finished() {
         return;
     }
     test.target_accepted |= global.ufo.access().target_accepted;
     if let Some(start) = test.started_frame
-        && ufo_death::run(test, global, frame - start)
+        && ufo_death::run(spring, test, global, frame - start)
     {
         return;
     }
     if global.ufo.access().id >= 0 {
-        update_test(test, global, frame);
+        update_test(spring, test, global, frame);
     }
 }
 
-fn update_test(test: &mut TestState, global: &Global, frame: i32) {
+fn update_test(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    test: &mut TestState,
+    global: &Global,
+    frame: i32,
+) {
     let start = match test.started_frame {
         Some(start) => start,
         None => {
             spring::log_info!(
+                spring,
                 SECTION,
                 "[Area17-Rust-Test] Starting integration test suite"
             );
             test.started_frame = Some(frame);
-            prepare(test, global);
+            prepare(spring, test, global);
             frame
         }
     };
     let elapsed = frame - start;
 
     if elapsed == 1 && !test.upgrades_verified {
-        weapons::verify_weapon_behaviours(test);
+        weapons::verify_weapon_behaviours(spring, test);
         if test.finished() {
             return;
         }
-        verify_upgrades(test, global);
+        verify_upgrades(spring, test, global);
         test.upgrades_verified = true;
         if test.finished() {
             return;
         }
     }
     if elapsed == 2 {
-        let _ = spring::set_unit_shield_state(global.ufo.access().id, -1, true, 10.0);
+        let _ = spring
+            .unit_control()
+            .set_unit_shield_state(global.ufo.access().id, -1, true, 10.0);
     }
     if elapsed == 3 && !test.shield_regen_verified {
-        let Some(shield) = spring::units_info::get_unit_shield_state(global.ufo.access().id, -1)
+        let Some(shield) = spring
+            .units_info()
+            .get_unit_shield_state(global.ufo.access().id, -1)
             .ok()
             .flatten()
         else {
-            test.fail("could not read the live shield state from the engine");
+            test.fail(
+                spring,
+                "could not read the live shield state from the engine",
+            );
             return;
         };
         if !(11.4..11.6).contains(&shield.shield_power) {
-            test.fail(
+            test.fail(spring,
                 "shield regeneration overwrote damage instead of regenerating from the live shield state",
             );
             return;
         }
         test.shield_regen_verified = true;
-        test.pass("shield regeneration starts from the live engine shield power");
+        test.pass(
+            spring,
+            "shield regeneration starts from the live engine shield power",
+        );
     }
 
-    gameplay::run(test, global, elapsed);
-    civilians::run(test, global, elapsed);
+    gameplay::run(spring, test, global, elapsed);
+    civilians::run(spring, test, global, elapsed);
     if test.finished() {
         return;
     }
     if test.stage < Weapon::ALL.len() {
-        weapons::run_weapon_stage(test, global, elapsed);
+        weapons::run_weapon_stage(spring, test, global, elapsed);
         return;
     }
     if test.stage == Weapon::ALL.len() {
-        weapons::run_haste_stage(test, global, elapsed);
+        weapons::run_haste_stage(spring, test, global, elapsed);
         return;
     }
-    god_gun::run(test, global, elapsed);
+    god_gun::run(spring, test, global, elapsed);
 }
 
-fn prepare(test: &mut TestState, global: &Global) {
+fn prepare(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    test: &mut TestState,
+    global: &Global,
+) {
     {
         let mut economy = global.economy.access_mut();
         economy.research = 1_000_000.0;
         economy.biomass = 1_000_000.0;
     }
     for tech in TechId::ALL {
-        if !state::tech(&global.tech.access(), tech).unlocked && !upgrades::unlock(global, tech) {
-            test.fail("could not unlock integration-test technology");
+        if !state::tech(&global.tech.access(), tech).unlocked
+            && !upgrades::unlock(spring, global, tech)
+        {
+            test.fail(spring, "could not unlock integration-test technology");
         }
     }
     for _ in 0..2 {
-        if !upgrades::upgrade(global, TechId::PulseLaser)
-            || !upgrades::upgrade(global, TechId::AntiMissilePointDefense)
+        if !upgrades::upgrade(spring, global, TechId::PulseLaser)
+            || !upgrades::upgrade(spring, global, TechId::AntiMissilePointDefense)
         {
-            test.fail("could not upgrade integration-test technology");
+            test.fail(spring, "could not upgrade integration-test technology");
         }
     }
 }
 
-fn verify_upgrades(test: &mut TestState, global: &Global) {
-    let Ok(map) = spring::game::get_game_map_info(0) else {
-        test.fail("could not read map-damage state from the engine");
+fn verify_upgrades(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    test: &mut TestState,
+    global: &Global,
+) {
+    let Ok(map) = spring.game().get_game_map_info() else {
+        test.fail(spring, "could not read map-damage state from the engine");
         return;
     };
     let width = map.map_size_x as f32;
     let height = map.map_size_z as f32;
-    if definitions::clamp_xz(width + 800.0, -500.0) != Some((width - 1.0, 1.0))
-        || definitions::clamp_xz(-500.0, height + 800.0) != Some((1.0, height - 1.0))
+    if definitions::clamp_xz(spring, width + 800.0, -500.0) != Some((width - 1.0, 1.0))
+        || definitions::clamp_xz(spring, -500.0, height + 800.0) != Some((1.0, height - 1.0))
     {
-        test.fail("movement destinations did not clamp to the engine map dimensions");
+        test.fail(
+            spring,
+            "movement destinations did not clamp to the engine map dimensions",
+        );
         return;
     }
     if !map.map_damage {
-        test.fail("the engine started Area 17 with map damage disabled");
+        test.fail(
+            spring,
+            "the engine started Area 17 with map damage disabled",
+        );
         return;
     }
-    let Ok(god_gun) = spring::units_weapons::get_unit_weapon_damages(global.ufo.access().id, 9)
+    let Ok(god_gun) = spring
+        .units_weapons()
+        .get_unit_weapon_damages(global.ufo.access().id, 9)
     else {
-        test.fail("could not read God Gun damage settings from the engine");
+        test.fail(
+            spring,
+            "could not read God Gun damage settings from the engine",
+        );
         return;
     };
     if (god_gun.crater_boost - 2.5).abs() > f32::EPSILON
         || (god_gun.crater_mult - 5.0).abs() > f32::EPSILON
     {
-        test.fail("God Gun crater settings do not match the Lua weapon definition");
+        test.fail(
+            spring,
+            "God Gun crater settings do not match the Lua weapon definition",
+        );
         return;
     }
-    if !weapon_multishot::apply(global) {
-        test.fail("the engine rejected one or more upgraded Pulse Laser or Point Defense slots");
+    if !weapon_multishot::apply(spring, global) {
+        test.fail(
+            spring,
+            "the engine rejected one or more upgraded Pulse Laser or Point Defense slots",
+        );
         return;
     }
-    test.pass(
+    test.pass(spring,
         "map damage is enabled, God Gun crater strength is loaded, and the engine accepts every upgraded weapon slot",
     );
 
     let before = global.economy.access().biomass;
-    let upgraded = upgrades::upgrade(global, TechId::IndependenceDayGun);
+    let upgraded = upgrades::upgrade(spring, global, TechId::IndependenceDayGun);
     let cost = before - global.economy.access().biomass;
     let message = alloc::format!("upgrading the God Gun cost {cost:.0} biomass");
     if !upgraded || cost != 37_500.0 {
-        test.fail(message);
+        test.fail(spring, message);
         return;
     }
-    test.pass(message);
+    test.pass(spring, message);
 }

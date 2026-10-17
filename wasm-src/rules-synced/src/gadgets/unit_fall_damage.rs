@@ -23,10 +23,11 @@ impl Gadget<Global> for UnitFallDamageGadget {
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
+        let spring = ctx.spring();
         let global = ctx.global();
         global.fall_immunity.access_mut().expire(frame);
         let collisions = self.collisions.take();
-        fall_damage::resolve_collisions(global, collisions, frame);
+        fall_damage::resolve_collisions(spring, global, collisions, frame);
     }
 
     fn unit_destroyed(
@@ -48,10 +49,12 @@ impl Gadget<Global> for UnitFallDamageGadget {
         ctx: &spring_addons::AddonContext<'_, Global>,
         event: &UnitPreDamagedEvent,
     ) -> Option<spring::DamageResult> {
+        let spring = ctx.spring();
         let from_engine = event.attacker_id < 0;
         Some(match event.weapon_def_id {
             fall_damage::OBJECT_COLLISION if from_engine => {
                 fall_damage::record_collision(
+                    spring,
                     &self.collisions,
                     event.unit_id,
                     event.unit_def_id,
@@ -60,13 +63,13 @@ impl Gadget<Global> for UnitFallDamageGadget {
                 fall_damage::no_damage()
             }
             fall_damage::GROUND_COLLISION if from_engine => {
-                let frame = spring::game::current_frame();
+                let frame = spring.game().current_frame().unwrap_or(0);
                 let immune = ctx
                     .global()
                     .fall_immunity
                     .access()
                     .is_immune(event.unit_id, frame);
-                fall_damage::ground_collision(event.unit_id, event.unit_def_id, immune)
+                fall_damage::ground_collision(spring, event.unit_id, event.unit_def_id, immune)
             }
             fall_damage::DEBRIS => fall_damage::debris(),
             weapon if fall_damage::handles(weapon) => spring::DamageResult::unchanged(event.damage),

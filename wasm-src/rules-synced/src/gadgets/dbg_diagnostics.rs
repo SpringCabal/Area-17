@@ -20,16 +20,18 @@ impl Gadget<Global> for DbgDiagnosticsGadget {
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
+        let spring = ctx.spring();
         let (ufo_id, aim) = {
             let ufo = ctx.global().ufo.access();
             (ufo.id, ufo.aim)
         };
-        let (health, max_health) = definitions::unit_health(ufo_id).unwrap_or_default();
+        let (health, max_health) = definitions::unit_health(spring, ufo_id).unwrap_or_default();
         diagnostics::frame(
+            spring,
             frame,
             diagnostics::FrameSnapshot {
                 ufo_id,
-                position: ufo_position(ufo_id),
+                position: ufo_position(spring, ufo_id),
                 aim,
                 health,
                 max_health,
@@ -38,9 +40,9 @@ impl Gadget<Global> for DbgDiagnosticsGadget {
     }
 }
 
-fn ufo_position(ufo_id: i32) -> Float3 {
+fn ufo_position(spring: &spring::Spring<'_, spring::RulesSynced>, ufo_id: i32) -> Float3 {
     (ufo_id >= 0)
-        .then(|| definitions::unit_position(ufo_id))
+        .then(|| definitions::unit_position(spring, ufo_id))
         .flatten()
         .unwrap_or_default()
 }

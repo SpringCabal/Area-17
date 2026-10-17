@@ -23,7 +23,8 @@ impl Gadget<Global> for DbgVisualIntegrationGadget {
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
-        visual_integration::update(&mut self.test.borrow_mut(), ctx.global(), frame);
+        let spring = ctx.spring();
+        visual_integration::update(spring, &mut self.test.borrow_mut(), ctx.global(), frame);
     }
 
     fn handle_lua_msg(
@@ -59,7 +60,9 @@ impl Gadget<Global> for DbgVisualIntegrationGadget {
         _owner_id: i32,
         _projectile_id: i32,
     ) -> bool {
+        let spring = _ctx.spring();
         self.test.borrow_mut().explosion(
+            spring,
             weapon_def_id,
             Float3 {
                 x: pos.0,

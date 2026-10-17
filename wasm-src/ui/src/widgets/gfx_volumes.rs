@@ -36,11 +36,12 @@ impl Widget<Global> for GfxVolumesWidget {
         "GfxVolumes"
     }
 
-    fn update(&self, _ctx: &spring_addons::AddonContext<'_, Global>, dt: f32) {
+    fn update(&self, _ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>, dt: f32) {
         self.seconds.set(self.seconds.get() + dt.max(0.0));
     }
 
-    fn draw_world(&self, ctx: &spring_addons::AddonContext<'_, Global>) {
+    fn draw_world(&self, ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>) {
+        let spring = ctx.spring();
         let (ufo_id, abduction_radius) = {
             let simulation = ctx.global().simulation.access();
             (simulation.ufo_id, simulation.abduction_radius)
@@ -48,14 +49,22 @@ impl Widget<Global> for GfxVolumesWidget {
         if ufo_id < 0 || abduction_radius <= 0.0 {
             return;
         }
-        let beam = spring::get_unit_rules_param_f32(ufo_id, "beam_enabled").unwrap_or(0.0);
+        let beam = spring
+            .rules_params()
+            .get_unit_rules_param_f32(ufo_id, "beam_enabled")
+            .unwrap_or(0.0);
         if beam < 0.0 {
             return;
         }
-        let Ok(position) = spring::unit_rendering::get_unit_view_position(ufo_id, false) else {
+        let Ok(position) = spring
+            .unit_rendering()
+            .get_unit_view_position(ufo_id, false)
+        else {
             return;
         };
-        let ground = spring::get_ground_height(position.x, position.z)
+        let ground = spring
+            .terrain()
+            .get_ground_height(position.x, position.z)
             .unwrap_or(0.0)
             .max(0.0);
         let height = position.y - ground;
@@ -74,6 +83,7 @@ impl Widget<Global> for GfxVolumesWidget {
             (1.0 + radius_oscillation * pulse) * abduction_radius * height / MAX_UFO_HEIGHT;
         let alpha = base_alpha + alpha_oscillation * pulse;
         draw_cone(
+            spring,
             position.x,
             ground,
             position.z,
@@ -85,7 +95,16 @@ impl Widget<Global> for GfxVolumesWidget {
     }
 }
 
-fn draw_cone(x: f32, y: f32, z: f32, height: f32, radius: f32, top_radius: f32, color: [f32; 4]) {
+fn draw_cone(
+    spring: &spring::Spring<'_, spring::Ui>,
+    x: f32,
+    y: f32,
+    z: f32,
+    height: f32,
+    radius: f32,
+    top_radius: f32,
+    color: [f32; 4],
+) {
     let cone = ConeParams {
         x,
         y,
@@ -96,32 +115,33 @@ fn draw_cone(x: f32, y: f32, z: f32, height: f32, radius: f32, top_radius: f32, 
         color,
     };
 
-    let _ = spring::alpha_test(true, gl::GREATER, 0.0);
-    let _ = spring::depth_test(spring::ui::gfx::GfxDepthTestOptions {
+    let _ = spring.gfx().alpha_test(true, gl::GREATER, 0.0);
+    let _ = spring.gfx().depth_test(spring::gfx::GfxDepthTestOptions {
         enable: true,
         set_func: false,
         func: 0,
     });
-    let _ = spring::culling(true);
-    let _ = spring::begin_end(gl::TRIANGLE_STRIP, || {
-        emit_cone_vertices(&cone);
+    let _ = spring.gfx().culling(true);
+    let _ = spring.gfx().begin_end(gl::TRIANGLE_STRIP, |spring| {
+        emit_cone_vertices(spring, &cone);
     });
 
-    let _ = spring::alpha_test(false, gl::GREATER, 0.0);
-    let _ = spring::depth_test(spring::ui::gfx::GfxDepthTestOptions {
+    let _ = spring.gfx().alpha_test(false, gl::GREATER, 0.0);
+    let _ = spring.gfx().depth_test(spring::gfx::GfxDepthTestOptions {
         enable: false,
         set_func: false,
         func: 0,
     });
-    let _ = spring::culling(false);
+    let _ = spring.gfx().culling(false);
 }
 
-fn emit_cone_vertices(cone: &ConeParams) {
+fn emit_cone_vertices(spring: &spring::Spring<'_, spring::Ui>, cone: &ConeParams) {
     for index in 0..=CONE_SEGMENTS {
         let angle = core::f32::consts::TAU * index as f32 / CONE_SEGMENTS as f32;
         let sin = angle.sin();
         let cos = angle.cos();
         emit_vertex(
+            spring,
             cone.x + cone.top_radius * sin,
             cone.y + cone.height,
             cone.z + cone.top_radius * cos,
@@ -129,6 +149,7 @@ fn emit_cone_vertices(cone: &ConeParams) {
             1.0,
         );
         emit_vertex(
+            spring,
             cone.x + cone.radius * sin,
             cone.y,
             cone.z + cone.radius * cos,
@@ -138,7 +159,16 @@ fn emit_cone_vertices(cone: &ConeParams) {
     }
 }
 
-fn emit_vertex(x: f32, y: f32, z: f32, color: [f32; 4], alpha: f32) {
-    let _ = spring::color(color[0], color[1], color[2], color[3] * alpha);
-    let _ = spring::vertex(x, y, z, 1.0, 3);
+fn emit_vertex(
+    spring: &spring::Spring<'_, spring::Ui>,
+    x: f32,
+    y: f32,
+    z: f32,
+    color: [f32; 4],
+    alpha: f32,
+) {
+    let _ = spring
+        .gfx()
+        .color(color[0], color[1], color[2], color[3] * alpha);
+    let _ = spring.gfx().vertex(x, y, z, 1.0, 3);
 }

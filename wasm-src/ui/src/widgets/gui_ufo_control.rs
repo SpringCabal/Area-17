@@ -45,11 +45,17 @@ impl Widget<Global> for GuiUfoControlWidget {
         "GuiUfoControl"
     }
 
-    fn init(&self, _ctx: &spring_addons::AddonContext<'_, Global>) {
-        hide_existing_drones();
+    fn init(&self, _ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>) {
+        let spring = _ctx.spring();
+        hide_existing_drones(spring);
     }
 
-    fn recv_from_synced(&self, _ctx: &spring_addons::AddonContext<'_, Global>, message: &[u8]) {
+    fn recv_from_synced(
+        &self,
+        _ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>,
+        message: &[u8],
+    ) {
+        let spring = _ctx.spring();
         let Some(unit_id) = core::str::from_utf8(message)
             .ok()
             .and_then(|message| message::fields(message, msg::DRONE))
@@ -57,15 +63,18 @@ impl Widget<Global> for GuiUfoControlWidget {
         else {
             return;
         };
-        spring::unsynced_ctrl::set_unit_no_select(unit_id, true)
-            .log_err_once("Area 17 drone selection: set unit no select");
+        spring
+            .unsynced_ctrl()
+            .set_unit_no_select(unit_id, true)
+            .log_err_once(spring, "Area 17 drone selection: set unit no select");
     }
 
-    fn update(&self, ctx: &spring_addons::AddonContext<'_, Global>, _dt: f32) {
+    fn update(&self, ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>, _dt: f32) {
+        let spring = ctx.spring();
         let global = ctx.global();
-        self.update_movement();
-        let Some((x, y, left)) = mouse_state() else {
-            self.update_fire(global, false);
+        self.update_movement(spring);
+        let Some((x, y, left)) = mouse_state(spring) else {
+            self.update_fire(spring, global, false);
             return;
         };
         let was_left_mouse_down = self.left_mouse_down.get();
@@ -73,65 +82,72 @@ impl Widget<Global> for GuiUfoControlWidget {
         self.left_mouse_down.set(left);
 
         let context = global.hud.access().context;
-        process_mouse_move(global, context, x, y);
-        self.update_aim(x, y);
+        process_mouse_move(spring, global, context, x, y);
+        self.update_aim(spring, x, y);
         if left && !rml_pointer_active && !was_left_mouse_down {
-            diagnostics::input("mouse fire start");
+            diagnostics::input(spring, "mouse fire start");
         }
-        self.update_fire(global, left && !rml_pointer_active);
+        self.update_fire(spring, global, left && !rml_pointer_active);
     }
 
     fn mouse_move(
         &self,
-        ctx: &spring_addons::AddonContext<'_, Global>,
+        ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>,
         x: i32,
         y: i32,
         _dx: i32,
         _dy: i32,
         _button: i32,
     ) -> EventResult {
-        ui_owns_pointer(ctx.global(), x, y).into()
+        let spring = ctx.spring();
+        ui_owns_pointer(spring, ctx.global(), x, y).into()
     }
 
     fn mouse_press(
         &self,
-        ctx: &spring_addons::AddonContext<'_, Global>,
+        ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>,
         x: i32,
         y: i32,
         button: i32,
     ) -> EventResult {
+        let spring = ctx.spring();
         let global = ctx.global();
         let context = global.hud.access().context;
-        process_mouse_move(global, context, x, y);
+        process_mouse_move(spring, global, context, x, y);
         if context != 0 {
-            let _ = spring::context_process_mouse_button_down(context, button - 1, 0);
+            let _ = spring
+                .rml_ui()
+                .context_process_mouse_button_down(context, button - 1, 0);
         }
         if button != spring::mouse::LEFT {
-            return ui_owns_pointer(global, x, y).into();
+            return ui_owns_pointer(spring, global, x, y).into();
         }
-        if ui_owns_pointer(global, x, y) {
+        if ui_owns_pointer(spring, global, x, y) {
             self.rml_pointer_active.set(true);
             return EventResult::Handled;
         }
         self.left_mouse_down.set(true);
-        self.update_aim(x, y);
-        diagnostics::input("mouse fire press");
-        self.update_fire(global, true);
+        self.update_aim(spring, x, y);
+        diagnostics::input(spring, "mouse fire press");
+        self.update_fire(spring, global, true);
         EventResult::Handled
     }
 
     fn mouse_release(
         &self,
-        ctx: &spring_addons::AddonContext<'_, Global>,
+        ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>,
         x: i32,
         y: i32,
         button: i32,
     ) -> EventResult {
+        let spring = ctx.spring();
         let global = ctx.global();
         let context = global.hud.access().context;
-        process_mouse_move(global, context, x, y);
+        process_mouse_move(spring, global, context, x, y);
         if context != 0 {
-            let _ = spring::context_process_mouse_button_up(context, button - 1, 0);
+            let _ = spring
+                .rml_ui()
+                .context_process_mouse_button_up(context, button - 1, 0);
         }
         if button == spring::mouse::LEFT {
             self.left_mouse_down.set(false);
@@ -142,17 +158,18 @@ impl Widget<Global> for GuiUfoControlWidget {
 
     fn key_press(
         &self,
-        ctx: &spring_addons::AddonContext<'_, Global>,
+        ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>,
         event: &KeyEvent<'_>,
     ) -> EventResult {
+        let spring = ctx.spring();
         let global = ctx.global();
 
         if menu::is_quit_to_menu(event) {
-            menu::quit_to_menu();
+            menu::quit_to_menu(spring);
             return EventResult::Handled;
         }
 
-        if self.movement.key(event, true) {
+        if self.movement.key(spring, event, true) {
             return EventResult::Handled;
         }
         if event.matches("t") {
@@ -161,7 +178,7 @@ impl Widget<Global> for GuiUfoControlWidget {
             }
             let mut panel = global.panel.access_mut();
             panel.upgrade_panel_open = !panel.upgrade_panel_open;
-            audio::play_ui("sounds/click.wav");
+            audio::play_ui(spring, "sounds/click.wav");
             return EventResult::Handled;
         }
         if event.matches("escape") {
@@ -178,15 +195,18 @@ impl Widget<Global> for GuiUfoControlWidget {
             if event.is_repeat {
                 return EventResult::Handled;
             }
-            send_to_rules(&Encoder::new(msg::ABILITY).field(ability.name()).finish());
-            diagnostics::input(ability.name());
+            send_to_rules(
+                spring,
+                &Encoder::new(msg::ABILITY).field(ability.name()).finish(),
+            );
+            diagnostics::input(spring, ability.name());
             return EventResult::Handled;
         }
         if let Some(index) = weapon_key(event) {
             if event.is_repeat {
                 return EventResult::Handled;
             }
-            commands::select_weapon(global, index);
+            commands::select_weapon(spring, global, index);
             return EventResult::Handled;
         }
         EventResult::Ignored
@@ -194,16 +214,16 @@ impl Widget<Global> for GuiUfoControlWidget {
 
     fn key_release(
         &self,
-        _ctx: &spring_addons::AddonContext<'_, Global>,
+        _ctx: &spring_addons::AddonContext<'_, Global, spring::Ui>,
         event: &KeyEvent<'_>,
     ) -> EventResult {
-        self.movement.key(event, false).into()
+        self.movement.key(_ctx.spring(), event, false).into()
     }
 }
 
 impl GuiUfoControlWidget {
-    fn update_aim(&self, x: i32, y: i32) {
-        let Some(target) = ground_at(x, y) else {
+    fn update_aim(&self, spring: &spring::Spring<'_, spring::Ui>, x: i32, y: i32) {
+        let Some(target) = ground_at(spring, x, y) else {
             return;
         };
         let changed = self.last_target.get().is_none_or(|old| {
@@ -215,11 +235,14 @@ impl GuiUfoControlWidget {
             return;
         }
         self.last_target.set(Some(target));
-        diagnostics::mouse_target(x, y, target);
-        send_to_rules(&commands::with_point(Encoder::new(msg::AIM), target));
+        diagnostics::mouse_target(spring, x, y, target);
+        send_to_rules(
+            spring,
+            &commands::with_point(Encoder::new(msg::AIM), target),
+        );
     }
 
-    fn update_fire(&self, global: &Global, held: bool) {
+    fn update_fire(&self, spring: &spring::Spring<'_, spring::Ui>, global: &Global, held: bool) {
         let order = held
             .then(|| self.last_target.get())
             .flatten()
@@ -229,14 +252,15 @@ impl GuiUfoControlWidget {
         }
         self.fire_sent.set(order);
         match order {
-            Some(order) => commands::fire(order),
-            None => commands::cease_fire(),
+            Some(order) => commands::fire(spring, order),
+            None => commands::cease_fire(spring),
         }
     }
 
-    fn update_movement(&self) {
-        self.movement
-            .send(|direction| send_to_rules(&protocol::encode_direction(direction)));
+    fn update_movement(&self, spring: &spring::Spring<'_, spring::Ui>) {
+        self.movement.send(spring, |direction| {
+            send_to_rules(spring, &protocol::encode_direction(direction))
+        });
     }
 }
 
@@ -244,17 +268,19 @@ fn weapon_key(event: &KeyEvent<'_>) -> Option<usize> {
     WEAPONS.iter().position(|weapon| event.matches(weapon.key))
 }
 
-fn hide_existing_drones() {
-    let Some(drone_def_id) = spring::get_unit_def_id_by_name("drone").ok() else {
+fn hide_existing_drones(spring: &spring::Spring<'_, spring::Ui>) {
+    let Some(drone_def_id) = spring.unit_defs().get_unit_def_id_by_name("drone").ok() else {
         return;
     };
-    let Ok(units) = spring::get_all_units() else {
+    let Ok(units) = spring.units_query().get_all_units() else {
         return;
     };
     for unit_id in units {
-        if spring::units_info::get_unit_def_id(unit_id).ok() == Some(drone_def_id) {
-            spring::unsynced_ctrl::set_unit_no_select(unit_id, true)
-                .log_err_once("Area 17 drone selection: set unit no select");
+        if spring.units_info().get_unit_def_id(unit_id).ok() == Some(drone_def_id) {
+            spring
+                .unsynced_ctrl()
+                .set_unit_no_select(unit_id, true)
+                .log_err_once(spring, "Area 17 drone selection: set unit no select");
         }
     }
 }

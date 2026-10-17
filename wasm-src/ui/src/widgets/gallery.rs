@@ -4,10 +4,10 @@ use springcabal::verification::WorldWidgets;
 use super::*;
 use crate::state::Global;
 
-pub fn setup(handler: &mut WidgetHandler<Global>) {
+pub fn setup(spring: &spring::Spring<'_, spring::Ui>, handler: &mut WidgetHandler<Global>) {
     WorldWidgets::new(handler)
         .widget(HideDefaultInterface::new(setup::HIDDEN_INTERFACE))
         .widget(ApiSyncWidget::new())
         .widget(GfxVolumesWidget::new())
-        .announce(crate::diagnostics::SECTION);
+        .announce(spring, crate::diagnostics::SECTION);
 }

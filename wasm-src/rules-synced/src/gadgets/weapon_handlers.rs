@@ -28,13 +28,15 @@ impl Gadget<Global> for WeaponHandlersGadget {
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
+        let spring = ctx.spring();
         let gravity = self.gravity_per_frame.get().unwrap_or_else(|| {
-            let gravity = definitions::gravity_per_frame();
+            let gravity = definitions::gravity_per_frame(spring);
             self.gravity_per_frame.set(Some(gravity));
             gravity
         });
-        weapons::apply_impulses(self.impulses.take(), gravity);
+        weapons::apply_impulses(spring, self.impulses.take(), gravity);
         weapons::update(
+            spring,
             ctx.global(),
             &mut self.areas.borrow_mut(),
             &self.impulses,
@@ -47,7 +49,9 @@ impl Gadget<Global> for WeaponHandlersGadget {
         ctx: &spring_addons::AddonContext<'_, Global>,
         event: &UnitPreDamagedEvent,
     ) -> Option<spring::DamageResult> {
+        let spring = ctx.spring();
         let damage = weapons::pre_damaged(
+            spring,
             ctx.global(),
             &self.impulses,
             event.unit_id,
@@ -59,15 +63,18 @@ impl Gadget<Global> for WeaponHandlersGadget {
 
         #[cfg(feature = "diagnostics")]
         if event.unit_id == ctx.global().ufo.access().id {
-            let frame = spring::game::current_frame();
+            let frame = spring.game().current_frame().unwrap_or(0);
             if frame.rem_euclid(spring::consts::GAME_SPEED) == 0 {
-                diagnostics::debug(&alloc::format!(
-                    "ufo damage frame={frame} unit={} weapon={} attacker={} incoming={:.2} applied={damage:.2}",
-                    event.unit_id,
-                    event.weapon_def_id,
-                    event.attacker_id,
-                    event.damage,
-                ));
+                diagnostics::debug(
+                    spring,
+                    &alloc::format!(
+                        "ufo damage frame={frame} unit={} weapon={} attacker={} incoming={:.2} applied={damage:.2}",
+                        event.unit_id,
+                        event.weapon_def_id,
+                        event.attacker_id,
+                        event.damage,
+                    ),
+                );
             }
         }
 
@@ -85,7 +92,9 @@ impl Gadget<Global> for WeaponHandlersGadget {
         owner_id: i32,
         _projectile_id: i32,
     ) -> bool {
+        let spring = ctx.spring();
         let area = weapons::explosion(
+            spring,
             &ctx.global().tech.access(),
             weapon_def_id,
             spring::Float3::new(pos.0, pos.1, pos.2),

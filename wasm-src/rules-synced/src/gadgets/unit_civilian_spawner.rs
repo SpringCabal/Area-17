@@ -23,15 +23,19 @@ impl Gadget<Global> for UnitCivilianSpawnerGadget {
     }
 
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
-        civilians::update(ctx.global(), &self.civilians, frame);
+        let spring = ctx.spring();
+        civilians::update(spring, ctx.global(), &self.civilians, frame);
         #[cfg(feature = "diagnostics")]
         if frame.rem_euclid(300) == 0 {
             let civilians = self.civilians.borrow();
-            crate::diagnostics::info(&alloc::format!(
-                "civilians frame={frame} spawners={} wanderers={}",
-                civilians.spawners.len(),
-                civilians.wanderers.len(),
-            ));
+            crate::diagnostics::info(
+                spring,
+                &alloc::format!(
+                    "civilians frame={frame} spawners={} wanderers={}",
+                    civilians.spawners.len(),
+                    civilians.wanderers.len(),
+                ),
+            );
         }
     }
 
@@ -43,7 +47,8 @@ impl Gadget<Global> for UnitCivilianSpawnerGadget {
         _team: i32,
         _builder: i32,
     ) {
-        civilians::unit_created(&mut self.civilians.borrow_mut(), unit, def);
+        let spring = _ctx.spring();
+        civilians::unit_created(spring, &mut self.civilians.borrow_mut(), unit, def);
     }
 
     fn unit_destroyed(
@@ -61,6 +66,7 @@ impl Gadget<Global> for UnitCivilianSpawnerGadget {
         _def: i32,
         _team: i32,
     ) {
-        civilians::unit_idle(&self.civilians, unit);
+        let spring = _ctx.spring();
+        civilians::unit_idle(spring, &self.civilians, unit);
     }
 }

@@ -204,7 +204,7 @@ pub(super) fn abduction_float(ctx: &UnitCtx, state: Rc<RefCell<HumanState>>) {
         }
         human.floating = true;
     }
-    play_sound("sounds/scream.wav", 0.8, ctx.unit());
+    play_sound(ctx, "sounds/scream.wav", 0.8);
     play(ctx, state, Pose::Float);
 }
 

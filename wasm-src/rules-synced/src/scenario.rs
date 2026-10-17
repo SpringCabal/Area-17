@@ -1,7 +1,7 @@
 use alloc::rc::Rc;
 use alloc::{format, string::String};
 use core::cell::RefCell;
-use spring::{ResultExt, commands};
+use spring::ResultExt;
 
 use crate::definitions;
 use crate::defs::{self, UnitKind};
@@ -68,7 +68,7 @@ impl LoadReport {
     }
 }
 
-pub fn load() {
+pub fn load(spring: &spring::Spring<'_, spring::RulesSynced>) {
     let report = Rc::new(RefCell::new(LoadReport::default()));
     for unit in INITIAL_UNITS {
         let Some(kind) = UnitKind::from_def_name(unit.name) else {
@@ -76,8 +76,8 @@ pub fn load() {
             continue;
         };
         let report = Rc::clone(&report);
-        definitions::create_at_height(kind, unit.x, unit.y, unit.z, unit.team, unit.angle).then(
-            move |unit_id| {
+        definitions::create_at_height(spring, kind, unit.x, unit.y, unit.z, unit.team, unit.angle)
+            .then(move |spring, unit_id| {
                 let Some(unit_id) = unit_id else {
                     report.borrow_mut().fail(unit.name);
                     return;
@@ -99,34 +99,40 @@ pub fn load() {
                             z: unit.z,
                         });
                     });
-                    initialize_ufo_health(unit_id);
-                    let _ = definitions::set_unit_param(unit_id, "selfMoveSpeedChange", 1.0);
+                    initialize_ufo_health(spring, unit_id);
+                    let _ =
+                        definitions::set_unit_param(spring, unit_id, "selfMoveSpeedChange", 1.0);
                 }
-                configure_unit(unit_id, unit);
-            },
-        );
+                configure_unit(spring, unit_id, unit);
+            });
     }
-    commands::run(move || {
-        let report = report.borrow();
-        if report.failed == 0 {
-            diagnostics::info(&format!(
-                "Area 17 scenario spawned all {} initial units",
-                report.created
-            ));
-        } else {
-            spring::log_warning!(
-                crate::diagnostics::SECTION,
-                "Area 17 scenario spawned {}/{} initial units; failed={} ({})",
-                report.created,
-                INITIAL_UNITS.len(),
-                report.failed,
-                report.failed_names
-            );
-        }
+    crate::with_addon_context(|ctx| {
+        ctx.commands().run(move |spring| {
+            let report = report.borrow();
+            if report.failed == 0 {
+                diagnostics::info(
+                    spring,
+                    &format!(
+                        "Area 17 scenario spawned all {} initial units",
+                        report.created
+                    ),
+                );
+            } else {
+                spring::log_warning!(
+                    spring,
+                    crate::diagnostics::SECTION,
+                    "Area 17 scenario spawned {}/{} initial units; failed={} ({})",
+                    report.created,
+                    INITIAL_UNITS.len(),
+                    report.failed,
+                    report.failed_names
+                );
+            }
+        })
     });
 }
 
-pub fn respawn(global: &Global, frame: i32) {
+pub fn respawn(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global, frame: i32) {
     let position = {
         let mut ufo = global.ufo.access_mut();
         let Some(respawn_frame) = ufo.respawn_frame else {
@@ -143,6 +149,7 @@ pub fn respawn(global: &Global, frame: i32) {
         position
     };
     definitions::create_at_height(
+        spring,
         UnitKind::Ufo,
         position.x,
         position.y,
@@ -150,16 +157,21 @@ pub fn respawn(global: &Global, frame: i32) {
         state::PLAYER_TEAM,
         0.0,
     )
-    .then(move |unit_id| {
+    .then(move |spring, unit_id| {
         let Some(unit_id) = unit_id else {
-            spring::log_warning!(crate::diagnostics::SECTION, "Area 17 UFO respawn failed");
+            spring::log_warning!(
+                spring,
+                crate::diagnostics::SECTION,
+                "Area 17 UFO respawn failed"
+            );
             crate::with_global(|global| global.ufo.access_mut().respawn_frame = Some(frame + 1));
             return;
         };
         crate::with_global(|global| global.ufo.access_mut().id = unit_id);
-        initialize_ufo_health(unit_id);
-        let _ = definitions::set_unit_param(unit_id, "selfMoveSpeedChange", 1.0);
+        initialize_ufo_health(spring, unit_id);
+        let _ = definitions::set_unit_param(spring, unit_id, "selfMoveSpeedChange", 1.0);
         configure_unit(
+            spring,
             unit_id,
             &InitialUnit {
                 x: position.x,
@@ -168,32 +180,47 @@ pub fn respawn(global: &Global, frame: i32) {
                 ..RESPAWNED_UFO
             },
         );
-        diagnostics::info("Area 17 UFO respawned");
+        diagnostics::info(spring, "Area 17 UFO respawned");
     });
 }
 
-fn initialize_ufo_health(unit_id: i32) {
-    let max_health = defs::unit_def(UnitKind::Ufo)
-        .and_then(defs::unit_data)
+fn initialize_ufo_health(spring: &spring::Spring<'_, spring::RulesSynced>, unit_id: i32) {
+    let max_health = defs::unit_def(spring, UnitKind::Ufo)
+        .and_then(|id| defs::unit_data(spring, id))
         .map_or(1_000.0, |physics| physics.health);
     let health = max_health.max(1.0);
-    spring::set_unit_max_health(unit_id, health)
-        .log_err_once("Area 17 scenario: set unit max health");
-    let _ = definitions::set_health(unit_id, health);
+    spring
+        .unit_control()
+        .set_unit_max_health(unit_id, health)
+        .log_err_once(spring, "Area 17 scenario: set unit max health");
+    let _ = definitions::set_health(spring, unit_id, health);
 }
 
-fn configure_unit(unit_id: i32, unit: &InitialUnit) {
+fn configure_unit(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    unit_id: i32,
+    unit: &InitialUnit,
+) {
     if !unit.tooltip.is_empty() {
-        spring::set_unit_tooltip(unit_id, unit.tooltip)
-            .log_err_once("Area 17 scenario: set unit tooltip");
+        spring
+            .unit_control()
+            .set_unit_tooltip(unit_id, unit.tooltip)
+            .log_err_once(spring, "Area 17 scenario: set unit tooltip");
     }
-    spring::set_unit_neutral(unit_id, unit.neutral)
-        .log_err_once("Area 17 scenario: set unit neutral");
-    spring::set_unit_experience(unit_id, unit.experience)
-        .log_err_once("Area 17 scenario: set unit experience");
-    spring::set_unit_rules_param_f32(unit_id, "n", unit.rules_n, los::PRIVATE)
-        .log_err_once("Area 17 scenario: set unit rules param f32");
+    spring
+        .unit_control()
+        .set_unit_neutral(unit_id, unit.neutral)
+        .log_err_once(spring, "Area 17 scenario: set unit neutral");
+    spring
+        .unit_control()
+        .set_unit_experience(unit_id, unit.experience)
+        .log_err_once(spring, "Area 17 scenario: set unit experience");
+    spring
+        .rules_params()
+        .set_unit_rules_param_f32(unit_id, "n", unit.rules_n, los::PRIVATE)
+        .log_err_once(spring, "Area 17 scenario: set unit rules param f32");
     set_initial_state(
+        spring,
         unit_id,
         unit.firestate,
         unit.movestate,
@@ -202,23 +229,33 @@ fn configure_unit(unit_id: i32, unit: &InitialUnit) {
     );
 }
 
-fn set_initial_state(unit_id: i32, firestate: i32, movestate: i32, cloak: bool, repeat: bool) {
+fn set_initial_state(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    unit_id: i32,
+    firestate: i32,
+    movestate: i32,
+    cloak: bool,
+    repeat: bool,
+) {
     for (command, value) in [
         (cmd::FIRE_STATE, firestate as f32),
         (cmd::MOVE_STATE, movestate as f32),
         (cmd::CLOAK, cloak as i32 as f32),
         (cmd::REPEAT, repeat as i32 as f32),
     ] {
-        let accepted = spring::give_order_to_unit(
-            unit_id,
-            cmd::INSERT,
-            &[0.0, command as f32, 0.0, value],
-            cmd::options::ALT_KEY,
-            -1,
-        )
-        .unwrap_or(false);
+        let accepted = spring
+            .unit_control()
+            .give_order_to_unit(
+                unit_id,
+                cmd::INSERT,
+                &[0.0, command as f32, 0.0, value],
+                cmd::options::ALT_KEY,
+                -1,
+            )
+            .unwrap_or(false);
         if !accepted {
             spring::log_warning!(
+                spring,
                 crate::diagnostics::SECTION,
                 "Area 17 unit {unit_id} rejected its initial state {command}={value}"
             );
