@@ -13,7 +13,14 @@ pub fn setup(
     #[cfg(feature = "headless-integration")]
     register_gadgets!(handler, [DbgIntegrationGadget::new()]);
     #[cfg(feature = "e2e")]
-    register_gadgets!(handler, [DbgVisualIntegrationGadget::new()]);
+    // The technology-panel fixture also uses e2e, without combat input.
+    if _spring
+        .game()
+        .get_mod_option("visual_test")
+        .is_ok_and(|option| option.exists && option.value == "1")
+    {
+        register_gadgets!(handler, [DbgVisualIntegrationGadget::new()]);
+    }
 
     register_gadgets!(
         handler,
