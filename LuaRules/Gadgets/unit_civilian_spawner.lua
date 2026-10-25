@@ -139,6 +139,8 @@ local spawners = {}  -- Units which spawn and recieve units
 local idleWanderer = {}
 
 local ufoX, ufoZ, ufoScareRadiusSq = 0, 0, 0
+local wandererQueryPadding = 0
+local canQueryWanderers = true
 
 
 --------------------------------------------------------------------------------
@@ -260,8 +262,21 @@ local function RemoveWanderer(unitID, unitDefID)
 end
 
 local function UpdateAllWanderers(frame)
-	for unitID,_ in pairs(wanderers) do
-		WandererCheckFlee(unitID)
+	if ufoScareRadiusSq > 0 and canQueryWanderers then
+		-- Use the engine's spatial index, while preserving wanderer iteration
+		-- order and the strict distance test in WandererCheckFlee.
+		local nearby = Spring.GetUnitsInCylinder(ufoX, ufoZ, math.sqrt(ufoScareRadiusSq) + wandererQueryPadding + 0.001)
+		local inRange = {}
+		for i = 1, #nearby do
+			inRange[nearby[i]] = true
+		end
+		for unitID in pairs(wanderers) do
+			if inRange[unitID] then
+				WandererCheckFlee(unitID)
+			end
+		end
+	elseif ufoScareRadiusSq > 0 then
+		for unitID in pairs(wanderers) do WandererCheckFlee(unitID) end
 	end
 	
 	if idleWanderer then
@@ -293,6 +308,15 @@ local function SpawnWanderer(unitDefID, spawnerData)
 			end
 			
 			Spring.SetUnitRotation(newID, 0, 2*math.pi*math.random(), 0)
+			-- Lua's cylinder query uses model midpoints, while fear uses base
+			-- positions. A full offset length covers rotations and slope tilt.
+			local x,y,z,mx,my,mz = Spring.GetUnitPosition(newID, true)
+			if mx then
+				wandererQueryPadding = math.max(wandererQueryPadding,
+					math.sqrt((mx-x)^2 + (my-y)^2 + (mz-z)^2))
+			else
+				canQueryWanderers = false
+			end
 			
 			local newData = {
 				unitID = newID,
