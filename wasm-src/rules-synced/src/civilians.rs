@@ -159,9 +159,23 @@ pub fn update(
     };
     let civilians = Rc::clone(civilians);
     let send_off = move |spring: &spring::Spring<'_, spring::RulesSynced>| {
-        let wanderer_count = civilians.borrow().wanderers.len();
-        for index in 0..wanderer_count {
-            check_flee(spring, &civilians, index, scare_radius);
+        if scare_radius > 0.0 {
+            let (x, z) = civilians.borrow().ufo_xz.unwrap_or_default();
+            // Query the native spatial index once instead of crossing the API
+            // boundary for every civilian. Keep the original wanderer order
+            // and exact distance check, including its strict radius boundary.
+            let nearby: Option<BTreeSet<i32>> = spring
+                .units_query()
+                .get_units_in_cylinder(x, z, scare_radius + 0.001, -1)
+                .log_err_once(spring, "querying civilians near the UFO")
+                .map(|units| units.into_iter().collect());
+            let wanderer_count = civilians.borrow().wanderers.len();
+            for index in 0..wanderer_count {
+                let id = civilians.borrow().wanderers[index].unit_id;
+                if nearby.as_ref().is_none_or(|units| units.contains(&id)) {
+                    check_flee(spring, &civilians, index, scare_radius);
+                }
+            }
         }
         let idle = core::mem::take(&mut civilians.borrow_mut().idle);
         for unit_id in idle {

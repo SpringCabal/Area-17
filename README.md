@@ -22,7 +22,7 @@ of the soundtrack and captures the engine's audio without using the speakers.
 
 Verification on the SDK test engine:
 
-- Linux and Wine: all 22 Rust integration checks and six Lua gameplay checks
+- Linux and Wine: all 23 Rust integration checks and six Lua gameplay checks
   pass, with no engine errors or warnings.
 - Technology UI fixture passes, including values, hover, purchase gates and
   its screenshot. The full visual scenario verifies the Rml callbacks, all
@@ -42,3 +42,11 @@ builds keep their existing log configuration.
 Use the parent development repository's `just verify area17` commands and
 select the engine with `SPRING_ENGINE_DIR`. Packaging continues to use
 independently built engine releases.
+
+Civilian fear uses one native cylinder query per update, followed by the
+original wanderer order and strict base-position distance check. Cloaking
+skips that query while leaving idle movement active. A failed spatial query
+is logged and falls back to the original scan.
+
+Release builds use whole-program LTO and one code generation unit. The
+workspace profile applies to both installed modules and verification builds.
