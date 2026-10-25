@@ -14,6 +14,12 @@ This worktree uses `spring-sdk` and the shared addon/CUS host. Helpers receive
 Unit-script tasks use `UnitCtx::with_spring` for individual engine operations.
 This remains a Wasm game; native game binaries are not built here.
 
+Music uses the shared `springcabal::music::MusicLoop`. From the development
+repository root, run
+`springcabal-rs/verification/music-loop.sh` to check Lua and
+Rust playback across several loops. It requires FFmpeg, clips a private copy
+of the soundtrack and captures the engine's audio without using the speakers.
+
 Verification on the SDK test engine:
 
 - Linux and Wine: all 22 Rust integration checks and six Lua gameplay checks
