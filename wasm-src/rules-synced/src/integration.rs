@@ -9,11 +9,11 @@ use core::fmt::Display;
 
 use springcabal::check::Suite;
 
-use crate::{definitions, state, upgrades, weapon_multishot};
+use crate::{definitions, defs, state, upgrades, weapon_multishot};
 use state::{Global, TechId, Weapon};
 
 const SECTION: &str = "area17-headless-test";
-const EXPECTED_CHECKS: u32 = 22;
+const EXPECTED_CHECKS: u32 = 23;
 
 struct Tally(Suite);
 
@@ -188,6 +188,43 @@ fn update_test(
     let elapsed = frame - start;
 
     if elapsed == 1 && !test.upgrades_verified {
+        let missing = crate::with_cus_module(|host, spring| {
+            Ok(spring
+                .units_query()
+                .get_all_units()?
+                .into_iter()
+                .filter(|unit| {
+                    defs::unit_kind(spring, *unit).is_some()
+                        && !host.is_attached(spring::UnitId(*unit))
+                })
+                .collect::<alloc::vec::Vec<_>>())
+        });
+        match missing {
+            Ok(missing) if missing.is_empty() => {
+                test.pass(
+                    spring,
+                    "every initial scenario unit has its CUS script attached",
+                );
+            }
+            Ok(missing) => {
+                test.fail(
+                    spring,
+                    alloc::format!(
+                        "{} initial scenario units have no CUS script (first IDs: {:?})",
+                        missing.len(),
+                        &missing[..missing.len().min(8)],
+                    ),
+                );
+                return;
+            }
+            Err(error) => {
+                test.fail(
+                    spring,
+                    alloc::format!("could not inspect initial scripts: {error:?}"),
+                );
+                return;
+            }
+        }
         weapons::verify_weapon_behaviours(spring, test);
         if test.finished() {
             return;

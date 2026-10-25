@@ -12,7 +12,12 @@ pub fn apply(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global) 
     if pulse_level > 0 {
         applied &= spring
             .unit_control()
-            .set_unit_weapon_state(ufo_id, ufo_slots::PULSE, "projectiles", pulse_level as f32)
+            .set_unit_weapon_state(
+                ufo_id,
+                ufo_slots::PULSE + 1,
+                "projectiles",
+                pulse_level as f32,
+            )
             .unwrap_or(false);
     }
 
@@ -48,7 +53,7 @@ pub fn apply(spring: &spring::Spring<'_, spring::RulesSynced>, global: &Global) 
             let reload = weapon.info.reload_time / multiplier;
             applied &= spring
                 .unit_control()
-                .set_unit_weapon_state(ufo_id, slot, "reloadTime", reload)
+                .set_unit_weapon_state(ufo_id, slot + 1, "reloadTime", reload)
                 .unwrap_or(false);
         }
     }

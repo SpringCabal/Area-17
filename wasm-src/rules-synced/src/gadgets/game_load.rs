@@ -1,14 +1,18 @@
+use core::cell::Cell;
+
 use spring_addons::rules::Gadget;
 
 use crate::scenario;
 use crate::state::Global;
 
 #[derive(Default)]
-pub struct GameLoadGadget;
+pub struct GameLoadGadget {
+    loaded: Cell<bool>,
+}
 
 impl GameLoadGadget {
     pub fn new() -> Self {
-        Self
+        Self::default()
     }
 }
 
@@ -17,13 +21,14 @@ impl Gadget<Global> for GameLoadGadget {
         "GameLoad"
     }
 
-    fn init(&self, _ctx: &spring_addons::AddonContext<'_, Global>) {
-        let spring = _ctx.spring();
-        scenario::load(spring);
-    }
-
     fn game_frame(&self, ctx: &spring_addons::AddonContext<'_, Global>, frame: i32) {
         let spring = ctx.spring();
+        // Addon init now runs while the module is loading, before its engine
+        // event subscription is installed. Populate once it can receive every
+        // UnitCreated event, including script attachment and unit setup.
+        if !self.loaded.replace(true) {
+            scenario::load(spring);
+        }
         scenario::respawn(spring, ctx.global(), frame);
     }
 }

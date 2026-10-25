@@ -13,6 +13,8 @@ pub const UFO_SCARE_RADIUS: f32 = 500.0;
 pub const DEFAULT_ABDUCTION_RADIUS: f32 = 70.0;
 pub const DEFAULT_ABDUCTION_SPEED: f32 = 7.0;
 
+// Zero-based slots for CUS callbacks and weapon-definition arrays.
+// Spring weapon getters and setters take slot + 1.
 pub mod ufo_slots {
     use core::ops::Range;
 
