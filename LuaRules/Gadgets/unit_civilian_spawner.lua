@@ -137,6 +137,13 @@ local wanderers = {} -- Units which wander around then go home
 local spawners = {}  -- Units which spawn and recieve units
 
 local idleWanderer = {}
+local spawnerOrder, spawnerOrderDirty = {}, true
+local function SortedKeys(t)
+    local keys = {}
+    for key in pairs(t) do keys[#keys+1] = key end
+    table.sort(keys)
+    return keys
+end
 
 local ufoX, ufoZ, ufoScareRadiusSq = 0, 0, 0
 local wandererQueryPadding = 0
@@ -280,7 +287,7 @@ local function UpdateAllWanderers(frame)
 	end
 	
 	if idleWanderer then
-		for unitID,_ in pairs(idleWanderer) do
+		for _, unitID in ipairs(SortedKeys(idleWanderer)) do
 			WandererWander(unitID)
 		end
 		idleWanderer = false
@@ -386,7 +393,8 @@ local function SpawnerUpdate(unitID, deltaTime)
 	
 	--// Make the first lot of spawned units.
 	if data.doInitialSpawn then
-		for _, spawnTypeData in pairs(data.spawns) do
+		for _, unitDefID in ipairs(data.spawnOrder) do
+            local spawnTypeData = data.spawns[unitDefID]
 			SpawnMaxWantedType(spawnTypeData, data, deltaTime)
 		end
 		data.doInitialSpawn = nil
@@ -395,7 +403,8 @@ local function SpawnerUpdate(unitID, deltaTime)
 	
 	--// Replace dead units
 	if ufoDistSq > UFO_DIST_SPAWN then
-		for _, spawnTypeData in pairs(data.spawns) do
+		for _, unitDefID in ipairs(data.spawnOrder) do
+            local spawnTypeData = data.spawns[unitDefID]
 			UpdateSpawnType(spawnTypeData, data, deltaTime)
 		end
 	end
@@ -428,17 +437,24 @@ local function AddSpawner(unitID, unitDefID)
 		}
 	end
 	
+	data.spawnOrder = SortedKeys(data.spawns)
+	spawnerOrderDirty = true
 	AddThing(unitID, spawners, data)
 end
 
 local function RemoveSpawner(unitID)
+	spawnerOrderDirty = true
 	RemoveThing(unitID, spawners)
 end
 
 local function UpdateAllSpawners(frame)
 	if frame%5 == 0 then
-		for unitID, data in pairs(spawners) do
-			SpawnerUpdate(unitID, 5)
+		if spawnerOrderDirty then
+            spawnerOrder = SortedKeys(spawners)
+            spawnerOrderDirty = false
+        end
+        for _, unitID in ipairs(spawnerOrder) do
+            SpawnerUpdate(unitID, 5)
 		end
 	end
 end
@@ -458,6 +474,7 @@ function gadget:UnitIdle(unitID, unitDefID, unitTeam)
 end
 
 function gadget:GameFrame(n)
+	if n == 0 then return end -- scenario creation finishes at the end of frame zero
 	ufoX = Spring.GetGameRulesParam("ufo_x") or 0
 	ufoZ = Spring.GetGameRulesParam("ufo_z") or 0
 	ufoScareRadiusSq = (Spring.GetGameRulesParam("ufo_scare_radius") or 0)^2
