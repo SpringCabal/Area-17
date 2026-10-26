@@ -252,7 +252,7 @@ fn start_capture(
     ufo_id: i32,
 ) {
     let (Some(ufo), Some((health, max_health))) = (
-        definitions::unit_base_position(spring, ufo_id),
+        definitions::unit_position(spring, ufo_id),
         definitions::unit_health(spring, ufo_id),
     ) else {
         test.fail(spring, "could not read the UFO before the capture");

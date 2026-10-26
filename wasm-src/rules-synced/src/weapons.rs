@@ -207,9 +207,9 @@ pub fn pre_damaged(
     }
     let mut damage = damage;
     if let Some(impulse) = behaviour.impulse
-        && let Some(attacker) = definitions::unit_position(spring, attacker_id)
+        && let Some(attacker) = definitions::unit_mid_position(spring, attacker_id)
     {
-        if let Some(target) = definitions::unit_position(spring, unit_id) {
+        if let Some(target) = definitions::unit_mid_position(spring, unit_id) {
             let multiplier = if weapon_def_id == defs::weapon(spring, Weapon::GravityBeam) {
                 upgrades::gravity_impulse_multiplier(&global.tech.access())
             } else {
@@ -257,7 +257,7 @@ fn apply_area(
         )
         .unwrap_or_default();
     for unit_id in units {
-        let Some(position) = definitions::unit_base_position(spring, unit_id) else {
+        let Some(position) = definitions::unit_position(spring, unit_id) else {
             continue;
         };
         let mut damage = area.damage;

@@ -99,6 +99,8 @@ pub struct UnitData {
     pub is_building: bool,
     pub speed: f32,
     pub acceleration: f32,
+    pub turn_rate: f32,
+    pub turn_accel: f32,
     pub brake_rate: f32,
     pub health: f32,
     pub height: f32,
@@ -121,6 +123,9 @@ impl UnitData {
             is_building: definition.classify.is_building,
             speed: spring.unit_defs().get_unit_def_speed(def_id).ok()?,
             acceleration: definition.physics.acceleration,
+            turn_rate: definition.physics.turn_rate,
+            turn_accel: custom_param(spring, def_id, "turnaccel")
+                .unwrap_or(definition.physics.turn_rate),
             brake_rate: definition.physics.brake_rate,
             health: spring.unit_defs().get_unit_def_health(def_id).ok()?,
             height: dimensions.map_or(0.0, |dimensions| dimensions.height),

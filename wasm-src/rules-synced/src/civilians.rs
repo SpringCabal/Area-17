@@ -68,13 +68,13 @@ const BUILDING1: [SpawnSpec; 4] = [
         stock_rate: 0.3 / GAME_SPEED as f32,
     },
     SpawnSpec {
-        kind: UnitKind::Scientist,
-        wanted: 1,
+        kind: UnitKind::Civilian1,
+        wanted: 2,
         stock_rate: 0.3 / GAME_SPEED as f32,
     },
     SpawnSpec {
-        kind: UnitKind::Civilian1,
-        wanted: 2,
+        kind: UnitKind::Scientist,
+        wanted: 1,
         stock_rate: 0.3 / GAME_SPEED as f32,
     },
     SpawnSpec {
@@ -90,13 +90,13 @@ const BUILDING2: [SpawnSpec; 4] = [
         stock_rate: 0.3 / GAME_SPEED as f32,
     },
     SpawnSpec {
-        kind: UnitKind::Scientist,
-        wanted: 1,
+        kind: UnitKind::Civilian1,
+        wanted: 3,
         stock_rate: 0.3 / GAME_SPEED as f32,
     },
     SpawnSpec {
-        kind: UnitKind::Civilian1,
-        wanted: 3,
+        kind: UnitKind::Scientist,
+        wanted: 1,
         stock_rate: 0.3 / GAME_SPEED as f32,
     },
     SpawnSpec {
@@ -202,16 +202,22 @@ pub fn unit_created(
             .all(|spawner| spawner.unit_id != unit_id)
         && let Some(position) = definitions::unit_position(spring, unit_id)
     {
-        civilians.spawners.push(Spawner {
-            unit_id,
-            unit_def_id,
-            x: position.x,
-            z: position.z,
-            active: false,
-            initialized: false,
-            stock: [0.0; 4],
-            wanderers: [0; 4],
-        });
+        let index = civilians
+            .spawners
+            .partition_point(|spawner| spawner.unit_id < unit_id);
+        civilians.spawners.insert(
+            index,
+            Spawner {
+                unit_id,
+                unit_def_id,
+                x: position.x,
+                z: position.z,
+                active: false,
+                initialized: false,
+                stock: [0.0; 4],
+                wanderers: [0; 4],
+            },
+        );
     }
 }
 
@@ -308,7 +314,7 @@ fn check_flee(
     if !wanderer.wandering {
         return;
     }
-    let Some(position) = definitions::unit_base_position(spring, wanderer.unit_id) else {
+    let Some(position) = definitions::unit_position(spring, wanderer.unit_id) else {
         return;
     };
     let away = Float3::new(position.x - ufo_x, 0.0, position.z - ufo_z);
@@ -414,6 +420,22 @@ fn set_spawner_active(
 }
 
 fn spawn_wanderer(
+    _spring: &spring::Spring<'_, spring::RulesSynced>,
+    civilians: &Rc<RefCell<Civilians>>,
+    spawner_id: i32,
+    spec: usize,
+    kind: UnitKind,
+) -> bool {
+    let civilians = Rc::clone(civilians);
+    crate::with_addon_context(|ctx| {
+        ctx.commands().run(move |spring| {
+            spawn_wanderer_now(spring, &civilians, spawner_id, spec, kind);
+        })
+    });
+    true
+}
+
+fn spawn_wanderer_now(
     spring: &spring::Spring<'_, spring::RulesSynced>,
     civilians: &Rc<RefCell<Civilians>>,
     spawner_id: i32,
@@ -435,38 +457,43 @@ fn spawn_wanderer(
         if !definitions::position_is_buildable(spring, kind, x, y, z) {
             continue;
         }
-        let angle = spring
-            .synced_random()
-            .next_float()
-            .expect("synced random float")
-            * 360.0;
-        let civilians = Rc::clone(civilians);
-        definitions::create_at_position(spring, kind, x, y, z, state::ENEMY_TEAM, angle).then(
-            move |spring, unit_id| {
-                let Some(unit_id) = unit_id else {
-                    return;
-                };
-                {
-                    let mut civilians = civilians.borrow_mut();
-                    civilians.wanderers.push(Wanderer {
-                        unit_id,
-                        spawn_id: spawner_id,
-                        spec,
-                        home_x: spawner.x,
-                        home_z: spawner.z,
-                        wandering: false,
-                    });
-                    if let Some(spawner) = civilians
-                        .spawners
-                        .iter_mut()
-                        .find(|spawner| spawner.unit_id == spawner_id)
-                    {
-                        spawner.wanderers[spec] += 1;
-                    }
-                }
-                set_idle(spring, &civilians, unit_id);
-            },
-        );
+        let Some(unit_id) = definitions::create_at_position_now(
+            spring,
+            kind,
+            Float3::new(x, y, z),
+            state::ENEMY_TEAM,
+        ) else {
+            return false;
+        };
+        let yaw = 2.0
+            * core::f32::consts::PI
+            * spring
+                .synced_random()
+                .next_float()
+                .expect("synced random float");
+        spring
+            .unit_control()
+            .set_unit_rotation(unit_id, Float3::new(0.0, yaw, 0.0))
+            .log_err_once(spring, "Area 17 wanderer rotation");
+        {
+            let mut civilians = civilians.borrow_mut();
+            civilians.wanderers.push(Wanderer {
+                unit_id,
+                spawn_id: spawner_id,
+                spec,
+                home_x: spawner.x,
+                home_z: spawner.z,
+                wandering: false,
+            });
+            if let Some(spawner) = civilians
+                .spawners
+                .iter_mut()
+                .find(|spawner| spawner.unit_id == spawner_id)
+            {
+                spawner.wanderers[spec] += 1;
+            }
+        }
+        set_idle(spring, civilians, unit_id);
         return true;
     }
     false

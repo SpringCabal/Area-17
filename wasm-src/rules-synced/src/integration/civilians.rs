@@ -70,7 +70,7 @@ pub(super) fn run(
         }
         WALK => {
             if let Some(loner) = test.orphans.loner
-                && let Some(position) = definitions::unit_base_position(spring, loner)
+                && let Some(position) = definitions::unit_position(spring, loner)
             {
                 let Some((x, z)) = definitions::clamp_xz(spring, position.x + 300.0, position.z)
                 else {

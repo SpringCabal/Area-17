@@ -25,7 +25,7 @@ pub fn update(
     if ufo_id < 0 || beam == BeamState::GodGun {
         return;
     }
-    let Some(ufo_position) = definitions::unit_base_position(spring, ufo_id) else {
+    let Some(ufo_position) = definitions::unit_position(spring, ufo_id) else {
         return;
     };
     let ufo_velocity = definitions::unit_velocity(spring, ufo_id).unwrap_or_default();
@@ -46,7 +46,7 @@ pub fn update(
         {
             continue;
         }
-        let Some(unit_position) = definitions::unit_position(spring, unit_id) else {
+        let Some(unit_position) = definitions::unit_mid_position(spring, unit_id) else {
             continue;
         };
         let height = definitions::unit_height(spring, unit_id);

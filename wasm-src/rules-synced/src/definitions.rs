@@ -32,7 +32,7 @@ pub fn set_unit_param(
         .unwrap_or(false)
 }
 
-pub fn unit_position(
+pub fn unit_mid_position(
     spring: &spring::Spring<'_, spring::RulesSynced>,
     unit_id: i32,
 ) -> Option<Float3> {
@@ -48,7 +48,7 @@ pub fn unit_position(
         .ok()
 }
 
-pub fn unit_base_position(
+pub fn unit_position(
     spring: &spring::Spring<'_, spring::RulesSynced>,
     unit_id: i32,
 ) -> Option<Float3> {
@@ -93,7 +93,7 @@ pub fn create_at_height(
     team: i32,
     angle: f32,
 ) -> Pending<spring::RulesSynced, Option<i32>> {
-    create_at(spring, kind, x, y, z, team, angle, true, false)
+    create_at(spring, kind, x, y, z, team, angle, true, true)
 }
 
 pub fn create_at_position(
@@ -106,6 +106,35 @@ pub fn create_at_position(
     angle: f32,
 ) -> Pending<spring::RulesSynced, Option<i32>> {
     create_at(spring, kind, x, y, z, team, angle, false, true)
+}
+
+/// Use only from an unborrowed command callback. Placement and creation must
+/// remain adjacent so the next placement sees this unit's blocking footprint.
+pub fn create_at_position_now(
+    spring: &spring::Spring<'_, spring::RulesSynced>,
+    kind: UnitKind,
+    position: spring::Float3,
+    team: i32,
+) -> Option<i32> {
+    let id = defs::unit_def(spring, kind)?;
+    spring
+        .unit_control()
+        .create_unit(
+            &spring::unit_control::DefRef {
+                name: kind.def_name().into(),
+                id,
+            },
+            position,
+            0,
+            team,
+            spring::unit_control::CreateUnitOptions {
+                unit_id: -1,
+                builder_id: -1,
+                build: false,
+                flatten_ground: false,
+            },
+        )
+        .log_err_once(spring, "Area 17 create wanderer")
 }
 
 pub fn position_is_buildable(
@@ -169,9 +198,9 @@ fn create_at(
                             z: heading.cos(),
                         },
                         spring::Float3 {
-                            x: heading.cos(),
+                            x: -heading.cos(),
                             y: 0.0,
-                            z: -heading.sin(),
+                            z: heading.sin(),
                         },
                     )
                     .log_err_once(spring, "Area 17 unit setup: set unit direction");
@@ -200,14 +229,40 @@ pub fn set_move_speed_multiplier(
     let Some(unit_def_id) = unit_def_id(spring, unit_id) else {
         return false;
     };
-    let Some(base_speed) = defs::unit_data(spring, unit_def_id).map(|physics| physics.speed) else {
+    let Some(data) = defs::unit_data(spring, unit_def_id) else {
         return false;
     };
-    spring
-        .move_ctrl()
-        .set_ground_move_type_max_speed(unit_id, base_speed * LUA_UNIT_SPEED_FACTOR * multiplier)
-        .log_err_once(spring, "Area 17 set move speed multiplier")
-        .unwrap_or(false)
+    use spring::move_ctrl::MoveTypeNumericField as Field;
+    let dec_factor = if multiplier <= 0.0 {
+        100000.0
+    } else if multiplier < 1.0 {
+        1000.0
+    } else {
+        multiplier
+    };
+    let acceleration = if multiplier < 1.0 {
+        (data.acceleration * multiplier * multiplier).min(multiplier)
+    } else {
+        data.acceleration * multiplier * multiplier
+    };
+    let mut accepted = true;
+    for (field, value) in [
+        (
+            Field::MoveTypeMaxSpeed,
+            data.speed * LUA_UNIT_SPEED_FACTOR * multiplier.max(0.0),
+        ),
+        (Field::MoveTypeGroundAccRate, acceleration),
+        (Field::MoveTypeGroundDecRate, data.brake_rate * dec_factor),
+        (Field::MoveTypeGroundTurnRate, data.turn_rate),
+        (Field::MoveTypeGroundTurnAccel, data.turn_accel),
+    ] {
+        accepted &= spring
+            .move_ctrl()
+            .set_move_type_numeric(unit_id, field, value)
+            .log_err_once(spring, "Area 17 ground movement attributes")
+            .unwrap_or(false);
+    }
+    accepted
 }
 
 pub fn set_gunship_attributes(
@@ -321,7 +376,7 @@ pub fn set_velocity(
 }
 
 pub fn is_on_ground(spring: &spring::Spring<'_, spring::RulesSynced>, unit_id: i32) -> bool {
-    let Some(position) = unit_base_position(spring, unit_id) else {
+    let Some(position) = unit_position(spring, unit_id) else {
         return false;
     };
     spring
