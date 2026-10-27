@@ -575,7 +575,7 @@ fn random_destination(
             .next_float()
             .expect("synced random float");
     (
-        home_x + angle.cos() * distance,
-        home_z + angle.sin() * distance,
+        home_x + springcabal_math::cosf(angle) * distance,
+        home_z + springcabal_math::sinf(angle) * distance,
     )
 }

@@ -20,6 +20,7 @@ dependencies = [
  "spring-sdk",
  "springcabal",
  "springcabal-control",
+ "springcabal-math",
 ]
 
 [[package]]
@@ -272,6 +273,10 @@ dependencies = [
  "spring-sdk",
  "springcabal",
 ]
+
+[[package]]
+name = "springcabal-math"
+version = "0.1.0"
 
 [[package]]
 name = "syn"

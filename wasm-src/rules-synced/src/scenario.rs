@@ -24,7 +24,7 @@ pub struct InitialUnit {
     pub experience: f32,
     pub rules_n: f32,
     pub firestate: i32,
-    pub movestate: i32,
+    pub movestate: Option<i32>,
     pub cloak: bool,
     pub repeat: bool,
 }
@@ -43,7 +43,7 @@ const RESPAWNED_UFO: InitialUnit = InitialUnit {
     experience: 0.0,
     rules_n: 0.0,
     firestate: 0,
-    movestate: 0,
+    movestate: Some(0),
     cloak: false,
     repeat: false,
 };
@@ -233,16 +233,17 @@ fn set_initial_state(
     spring: &spring::Spring<'_, spring::RulesSynced>,
     unit_id: i32,
     firestate: i32,
-    movestate: i32,
+    movestate: Option<i32>,
     cloak: bool,
     repeat: bool,
 ) {
     for (command, value) in [
-        (cmd::FIRE_STATE, firestate as f32),
-        (cmd::MOVE_STATE, movestate as f32),
-        (cmd::CLOAK, cloak as i32 as f32),
-        (cmd::REPEAT, repeat as i32 as f32),
+        (cmd::FIRE_STATE, Some(firestate as f32)),
+        (cmd::MOVE_STATE, movestate.map(|state| state as f32)),
+        (cmd::CLOAK, Some(cloak as i32 as f32)),
+        (cmd::REPEAT, Some(repeat as i32 as f32)),
     ] {
+        let Some(value) = value else { continue };
         let accepted = spring
             .unit_control()
             .give_order_to_unit(

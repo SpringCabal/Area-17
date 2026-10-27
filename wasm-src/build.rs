@@ -3,7 +3,7 @@ use std::{env, fs, path::PathBuf};
 fn main() {
     println!("cargo:rustc-link-arg=--initial-memory=67108864");
     println!("cargo:rustc-link-arg=--no-growable-memory");
-    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=../build.rs");
     println!("cargo:rerun-if-env-changed=CARGO_CFG_TARGET_ARCH");
     generate_scenario_data();
     let _ = env::var_os("CARGO_CFG_TARGET_ARCH");
@@ -77,7 +77,7 @@ fn generate_scenario_data() {
     for unit in units {
         let name = unit.name.as_ref().unwrap();
         output.push_str(&format!(
-            "    InitialUnit {{ name: {:?}, tooltip: {:?}, x: {}f32, y: {}f32, z: {}f32, angle: {}f32, team: {}, neutral: {}, experience: {}f32, rules_n: {}f32, firestate: {}, movestate: {}, cloak: {}, repeat: {} }},\n",
+            "    InitialUnit {{ name: {:?}, tooltip: {:?}, x: {}f32, y: {}f32, z: {}f32, angle: {}f32, team: {}, neutral: {}, experience: {}f32, rules_n: {}f32, firestate: {}, movestate: {:?}, cloak: {}, repeat: {} }},\n",
             name,
             unit.tooltip.unwrap_or_default(),
             float_literal(unit.x.unwrap()),
@@ -95,7 +95,7 @@ fn generate_scenario_data() {
                     2
                 }
             }),
-            unit.movestate.unwrap_or(0),
+            unit.movestate,
             unit.cloak.unwrap_or(false),
             unit.repeat.unwrap_or(false),
         ));

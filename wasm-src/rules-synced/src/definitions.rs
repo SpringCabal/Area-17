@@ -188,19 +188,21 @@ fn create_at(
 
             if apply_direction {
                 let heading = angle.to_radians();
+                let sine = springcabal_math::sinf(heading);
+                let cosine = springcabal_math::cosf(heading);
                 spring
                     .unit_control()
                     .set_unit_direction(
                         unit_id,
                         spring::Float3 {
-                            x: heading.sin(),
+                            x: sine,
                             y: 0.0,
-                            z: heading.cos(),
+                            z: cosine,
                         },
                         spring::Float3 {
-                            x: -heading.cos(),
+                            x: -cosine,
                             y: 0.0,
-                            z: heading.sin(),
+                            z: sine,
                         },
                     )
                     .log_err_once(spring, "Area 17 unit setup: set unit direction");
