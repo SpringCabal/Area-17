@@ -10,8 +10,8 @@ build: fmt clippy
     cargo build --workspace --target wasm32-unknown-unknown --release
 
 copy: build
-    cp target/wasm32-unknown-unknown/release/area17_rules_wasm.wasm ../LuaRules/wasm/area17-rules.wasm
-    cp target/wasm32-unknown-unknown/release/area17_ui_wasm.wasm ../LuaUI/wasm/area17-ui.wasm
+    cp "${CARGO_TARGET_DIR:-target}/wasm32-unknown-unknown/release/area17_rules_wasm.wasm" ../LuaRules/wasm/area17-rules.wasm
+    cp "${CARGO_TARGET_DIR:-target}/wasm32-unknown-unknown/release/area17_ui_wasm.wasm" ../LuaUI/wasm/area17-ui.wasm
 
 # Host tests of the crate the rules and UI share.
 test:
