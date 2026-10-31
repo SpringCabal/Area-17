@@ -65,10 +65,11 @@ local lx, ly, lz = UFO_START_X, 0, UFO_START_Z
 local cx, cy, cz = UFO_START_X, 0, UFO_START_Z
 
 local function UpdateSpeed(newVal, values, default)
-	newVal = newVal/AVERAGE_SPEEDS
-	values.average = values.average - (values[curIndex] or 0) + newVal
+	-- Keep the same unscaled movement history and operation order as the
+	-- shared Rust smoother. Scaling before accumulation changes f32 rounding.
+	values.average = values.average + (newVal - (values[curIndex] or 0))
 	values[curIndex] = newVal
-	return values.average
+	return values.average/AVERAGE_SPEEDS
 end
 
 local function SetCameraPosition(x, y, z, transition)
